@@ -5,8 +5,13 @@ namespace TaskList;
 
 public partial class App : Application
 {
+#if DEBUG
+    private const string MutexName = @"Local\TaskList.Debug.SingleInstance.Mutex";
+    private const string ActivateEventName = @"Local\TaskList.Debug.SingleInstance.Activate";
+#else
     private const string MutexName = @"Local\TaskList.SingleInstance.Mutex";
     private const string ActivateEventName = @"Local\TaskList.SingleInstance.Activate";
+#endif
 
     private static Mutex? _mutex;
     private static EventWaitHandle? _activateEvent;

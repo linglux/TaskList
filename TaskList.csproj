@@ -20,6 +20,10 @@
     <NoWarn>$(NoWarn);CA1416</NoWarn>
   </PropertyGroup>
 
+  <ItemGroup Condition="'$(Configuration)' == 'Debug'">
+    <AssemblyMetadata Include="DebugProjectDirectory" Value="$(MSBuildProjectDirectory)" />
+  </ItemGroup>
+
   <PropertyGroup Condition="'$(Configuration)' == 'Release'">
     <Optimize>true</Optimize>
     <DebugType>none</DebugType>

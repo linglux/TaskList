@@ -1,5 +1,6 @@
 using System.Globalization;
 using System.IO;
+using System.Reflection;
 using Microsoft.Data.Sqlite;
 
 namespace TaskList.Data;
@@ -9,8 +10,15 @@ public static class Database
     public const string TimeFormat = "yyyy-MM-dd HH:mm:ss";
     public const string DayFormat = "yyyy-MM-dd";
 
+#if DEBUG
+    public static string DataDirectory { get; } = typeof(Database).Assembly
+        .GetCustomAttributes<AssemblyMetadataAttribute>()
+        .FirstOrDefault(attribute => attribute.Key == "DebugProjectDirectory")?.Value
+        ?? throw new InvalidOperationException("无法获取 Debug 版的工程数据目录。");
+#else
     public static string DataDirectory => Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "TaskList");
+#endif
 
     public static string DbPath => Path.Combine(DataDirectory, "TaskList.db");
 
