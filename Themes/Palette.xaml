@@ -1,0 +1,51 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <SolidColorBrush x:Key="AccentBrush" Color="#6C63FF" />
+    <SolidColorBrush x:Key="AccentDeepBrush" Color="#574FE0" />
+    <SolidColorBrush x:Key="CyanBrush" Color="#22B8CF" />
+    <SolidColorBrush x:Key="SidebarBrush" Color="#151B32" />
+    <SolidColorBrush x:Key="SidebarItemBrush" Color="#2B3358" />
+    <SolidColorBrush x:Key="SidebarTextBrush" Color="#DCE2F4" />
+    <SolidColorBrush x:Key="SidebarMutedBrush" Color="#8993B5" />
+    <SolidColorBrush x:Key="IconBrush" Color="#8A92A8" />
+    <SolidColorBrush x:Key="ContentBrush" Color="#F5F7FC" />
+    <SolidColorBrush x:Key="CardBrush" Color="#FFFFFF" />
+    <SolidColorBrush x:Key="SoftBorderBrush" Color="#E7EAF4" />
+    <SolidColorBrush x:Key="TextPrimaryBrush" Color="#1D2340" />
+    <SolidColorBrush x:Key="TextSecondaryBrush" Color="#8991A8" />
+    <SolidColorBrush x:Key="TextTertiaryBrush" Color="#AEB5C8" />
+    <SolidColorBrush x:Key="HoverBrush" Color="#EEF0F9" />
+    <SolidColorBrush x:Key="DangerBrush" Color="#E5484D" />
+    <SolidColorBrush x:Key="WhiteBrush" Color="#FFFFFF" />
+
+    <LinearGradientBrush x:Key="SidebarGradient" StartPoint="0,0" EndPoint="1,1">
+        <GradientStop Color="#1A2240" Offset="0" />
+        <GradientStop Color="#11162A" Offset="1" />
+    </LinearGradientBrush>
+
+    <LinearGradientBrush x:Key="AccentGradient" StartPoint="0,0" EndPoint="1,1">
+        <GradientStop Color="#7C6CFF" Offset="0" />
+        <GradientStop Color="#5B7CFA" Offset="0.55" />
+        <GradientStop Color="#22C1D6" Offset="1" />
+    </LinearGradientBrush>
+
+    <LinearGradientBrush x:Key="HeaderGradient" StartPoint="0,0" EndPoint="1,1">
+        <GradientStop Color="#6C63FF" Offset="0" />
+        <GradientStop Color="#7D5BEA" Offset="0.55" />
+        <GradientStop Color="#22B8CF" Offset="1" />
+    </LinearGradientBrush>
+
+    <LinearGradientBrush x:Key="WarmGradient" StartPoint="0,0" EndPoint="1,1">
+        <GradientStop Color="#FB7185" Offset="0" />
+        <GradientStop Color="#F59E0B" Offset="1" />
+    </LinearGradientBrush>
+
+    <DropShadowEffect x:Key="ShadowSmall" x:Shared="False" BlurRadius="14" ShadowDepth="2"
+                      Direction="270" Color="#1A2340" Opacity="0.09" />
+    <DropShadowEffect x:Key="ShadowMedium" x:Shared="False" BlurRadius="26" ShadowDepth="6"
+                      Direction="270" Color="#1A2340" Opacity="0.14" />
+    <DropShadowEffect x:Key="ShadowLarge" x:Shared="False" BlurRadius="40" ShadowDepth="10"
+                      Direction="270" Color="#0B1026" Opacity="0.24" />
+
+</ResourceDictionary>

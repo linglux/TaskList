@@ -1,0 +1,25 @@
+<Application x:Class="TaskList.App"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:helpers="clr-namespace:TaskList.Helpers"
+             ShutdownMode="OnExplicitShutdown"
+             DispatcherUnhandledException="OnDispatcherUnhandledException">
+    <Application.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="Themes/Icons.xaml" />
+                <ResourceDictionary Source="Themes/Palette.xaml" />
+                <ResourceDictionary Source="Themes/Styles.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+
+            <BooleanToVisibilityConverter x:Key="BoolToVisibility" />
+            <helpers:InverseBoolToVisibilityConverter x:Key="InverseBoolToVisibility" />
+            <helpers:StringToVisibilityConverter x:Key="StringToVisibility" />
+            <helpers:CountToVisibilityConverter x:Key="CountToVisibility" />
+            <helpers:EqualityToBoolConverter x:Key="EqualityToBool" />
+            <helpers:BoolToInverseConverter x:Key="BoolToInverse" />
+            <helpers:ActiveBackgroundConverter x:Key="ActiveBackground" />
+            <helpers:ActiveForegroundConverter x:Key="ActiveForeground" />
+        </ResourceDictionary>
+    </Application.Resources>
+</Application>

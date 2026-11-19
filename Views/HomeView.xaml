@@ -1,0 +1,176 @@
+<UserControl x:Class="TaskList.Views.HomeView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="clr-namespace:TaskList.ViewModels"
+             Loaded="OnLoaded" Unloaded="OnUnloaded"
+             Background="{DynamicResource ContentBrush}">
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <!-- 页头 -->
+        <Grid Margin="34,28,34,0">
+            <StackPanel>
+                <TextBlock Text="{Binding HeaderTitle}" FontSize="28" FontWeight="Bold"
+                           Foreground="{DynamicResource TextPrimaryBrush}" />
+                <TextBlock Text="{Binding HeaderSubtitle}" FontSize="12.5" Margin="0,7,0,0"
+                           Foreground="{DynamicResource TextSecondaryBrush}" />
+            </StackPanel>
+            <Button HorizontalAlignment="Right" VerticalAlignment="Center" Style="{StaticResource PrimaryButtonStyle}"
+                    Command="{Binding NewTaskDetailedCommand}">
+                <StackPanel Orientation="Horizontal">
+                    <Path Data="{StaticResource IconPlus}" Style="{StaticResource IconPathWhite}" Width="14" Height="14" />
+                    <TextBlock Text="详细新建" Margin="8,0,0,0" />
+                </StackPanel>
+            </Button>
+        </Grid>
+
+        <!-- 快速添加栏 -->
+        <Border Grid.Row="1" Margin="34,22,34,0" Background="White" CornerRadius="14" Padding="14,12"
+                BorderBrush="{DynamicResource SoftBorderBrush}" BorderThickness="1"
+                Effect="{DynamicResource ShadowSmall}">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <Border Width="34" Height="34" CornerRadius="10" Background="#F0EEFF" Margin="0,0,12,0">
+                    <Path Data="{StaticResource IconPlus}" Style="{StaticResource IconPath}" Width="16" Height="16"
+                          Stroke="{DynamicResource AccentBrush}" />
+                </Border>
+
+                <TextBox x:Name="AddBox" Grid.Column="1" Style="{StaticResource ModernTextBoxStyle}"
+                         Text="{Binding NewTaskTitle, UpdateSourceTrigger=PropertyChanged}"
+                         KeyDown="OnAddBoxKeyDown" VerticalAlignment="Center" Margin="0,0,12,0"
+                         ToolTip="输入任务内容后按 Enter 添加" />
+
+                <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,12,0">
+                    <RadioButton Content="轻量" GroupName="NewWeight" Margin="0,0,4,0"
+                                 Style="{StaticResource WeightRadioStyle}" FontSize="11.5"
+                                 IsChecked="{Binding NewTaskWeight, Converter={StaticResource EqualityToBool}, ConverterParameter=Light}" />
+                    <RadioButton Content="中型" GroupName="NewWeight" Margin="0,0,4,0"
+                                 Style="{StaticResource WeightRadioStyle}" FontSize="11.5"
+                                 IsChecked="{Binding NewTaskWeight, Converter={StaticResource EqualityToBool}, ConverterParameter=Medium}" />
+                    <RadioButton Content="重型" GroupName="NewWeight"
+                                 Style="{StaticResource WeightRadioStyle}" FontSize="11.5"
+                                 IsChecked="{Binding NewTaskWeight, Converter={StaticResource EqualityToBool}, ConverterParameter=Heavy}" />
+                </StackPanel>
+
+                <ComboBox Grid.Column="3" Style="{StaticResource ModernComboBoxStyle}"
+                          ItemsSource="{Binding Groups}" SelectedItem="{Binding NewTaskGroup}"
+                          DisplayMemberPath="Name" Width="112" Margin="0,0,10,0" FontSize="12.5" />
+
+                <Button Grid.Column="4" Content="添加" Style="{StaticResource PrimaryButtonStyle}"
+                        Command="{Binding AddTaskCommand}" Padding="18,9" />
+            </Grid>
+        </Border>
+
+        <!-- 任务列表 -->
+        <Grid Grid.Row="2" Margin="34,22,34,24">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+
+            <Grid Margin="2,0,2,12">
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="待办任务" FontSize="13" FontWeight="SemiBold"
+                               Foreground="{DynamicResource TextPrimaryBrush}" />
+                    <TextBlock Text="勾选左侧圆圈即可完成，越重的任务仪式越足" FontSize="11.5"
+                               Margin="12,1,0,0" Foreground="{DynamicResource TextTertiaryBrush}" />
+                </StackPanel>
+                <TextBlock HorizontalAlignment="Right" Text="{Binding StatsLine}" FontSize="11.5"
+                           Foreground="{DynamicResource TextSecondaryBrush}" />
+            </Grid>
+
+            <Grid Grid.Row="1">
+                <ListBox ItemsSource="{Binding Tasks}" Style="{StaticResource PlainListBoxStyle}"
+                         ScrollViewer.CanContentScroll="True">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <Border Margin="0,0,4,10" Background="White" CornerRadius="12" Padding="15,13"
+                                    BorderBrush="{DynamicResource SoftBorderBrush}" BorderThickness="1"
+                                    Effect="{DynamicResource ShadowSmall}">
+                                <Grid x:Name="RowRoot" RenderTransformOrigin="0.5,0.5">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+
+                                    <CheckBox x:Name="TaskCheck" Grid.Column="0" IsChecked="False"
+                                              Style="{StaticResource TaskCheckBoxStyle}"
+                                              VerticalAlignment="Center" Click="OnTaskCheckClick" />
+
+                                    <StackPanel Grid.Column="1" Margin="13,0,10,0" VerticalAlignment="Center">
+                                        <Grid>
+                                            <TextBlock x:Name="TitleText" Text="{Binding Title}" FontSize="14.5"
+                                                       FontWeight="SemiBold" TextTrimming="CharacterEllipsis"
+                                                       Foreground="{DynamicResource TextPrimaryBrush}" />
+                                            <Rectangle x:Name="Strike" Width="0" Height="1.6" HorizontalAlignment="Left"
+                                                       VerticalAlignment="Center" Fill="{DynamicResource AccentBrush}"
+                                                       IsHitTestVisible="False" />
+                                        </Grid>
+                                        <TextBlock x:Name="NotesText" Text="{Binding Notes}" FontSize="11.5"
+                                                   Margin="0,4,0,0" TextTrimming="CharacterEllipsis"
+                                                   Foreground="{DynamicResource TextSecondaryBrush}"
+                                                   Visibility="{Binding Notes, Converter={StaticResource StringToVisibility}}" />
+                                        <StackPanel Orientation="Horizontal" Margin="0,7,0,0">
+                                            <Border CornerRadius="5" Padding="7,2" Background="{Binding WeightBackground}">
+                                                <TextBlock Text="{Binding WeightText}" FontSize="10.5"
+                                                           Foreground="{Binding WeightForeground}" />
+                                            </Border>
+                                            <Ellipse Width="6" Height="6" Margin="10,0,5,0"
+                                                     Fill="{Binding GroupBrush}" VerticalAlignment="Center" />
+                                            <TextBlock Text="{Binding MetaText}" FontSize="11"
+                                                       Foreground="{DynamicResource TextTertiaryBrush}"
+                                                       VerticalAlignment="Center" />
+                                        </StackPanel>
+                                    </StackPanel>
+
+                                    <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center"
+                                                Opacity="0.55">
+                                        <Button Style="{StaticResource ContentIconButtonStyle}"
+                                                ToolTip="编辑任务"
+                                                Command="{Binding DataContext.EditTaskCommand, RelativeSource={RelativeSource AncestorType=ListBox}}"
+                                                CommandParameter="{Binding}">
+                                            <Path Data="{StaticResource IconEdit}" Style="{StaticResource IconPath}"
+                                                  Width="16" Height="16" />
+                                        </Button>
+                                        <Button Style="{StaticResource ContentIconButtonStyle}"
+                                                ToolTip="删除任务"
+                                                Command="{Binding DataContext.DeleteTaskCommand, RelativeSource={RelativeSource AncestorType=ListBox}}"
+                                                CommandParameter="{Binding}">
+                                            <Path Data="{StaticResource IconTrash}" Style="{StaticResource IconPath}"
+                                                  Width="16" Height="16" />
+                                        </Button>
+                                    </StackPanel>
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+
+                <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" IsHitTestVisible="False"
+                            Visibility="{Binding HasTasks, Converter={StaticResource InverseBoolToVisibility}}">
+                    <Border Width="76" Height="76" CornerRadius="38" Background="#EDEFFB" HorizontalAlignment="Center">
+                        <Path Data="{StaticResource IconCheck}" Style="{StaticResource IconPath}" Width="34" Height="34"
+                              Stroke="{DynamicResource AccentBrush}" StrokeThickness="2.4" />
+                    </Border>
+                    <TextBlock Text="这里空空的" FontSize="17" FontWeight="SemiBold" Margin="0,16,0,6"
+                               HorizontalAlignment="Center" Foreground="{DynamicResource TextPrimaryBrush}" />
+                    <TextBlock Text="{Binding EmptyHint}" FontSize="12.5" HorizontalAlignment="Center"
+                               Foreground="{DynamicResource TextSecondaryBrush}" />
+                </StackPanel>
+            </Grid>
+        </Grid>
+    </Grid>
+</UserControl>
