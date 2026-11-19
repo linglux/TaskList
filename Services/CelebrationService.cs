@@ -6,11 +6,15 @@ namespace TaskList.Services;
 /// <summary>把「完成仪式」动画从任务列表视图转发到主窗口的全局遮罩层。</summary>
 public static class CelebrationService
 {
+    public static CelebrationEffect Effect { get; set; } = CelebrationEffect.Original;
     public static Func<TaskWeight, string, Point, Task>? PlayHandler { get; set; }
+    public static event Action<string>? PlaybackFailed;
 
-    public static Task PlayAsync(TaskWeight weight, string title, Point origin)
+    public static async Task PlayAsync(TaskWeight weight, string title, Point origin)
     {
         var handler = PlayHandler;
-        return handler is null ? Task.CompletedTask : handler(weight, title, origin);
+        if (handler is null) return;
+        try { await handler(weight, title, origin); }
+        catch (Exception ex) { PlaybackFailed?.Invoke($"完成特效播放失败：{ex.Message}"); }
     }
 }

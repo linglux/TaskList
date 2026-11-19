@@ -34,6 +34,7 @@ coverage*.info
 TaskList.db
 TaskList.db-wal
 TaskList.db-shm
+/Sounds/
 # 临时与系统文件
 *.tmp
 *.temp

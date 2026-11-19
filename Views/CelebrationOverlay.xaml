@@ -3,6 +3,26 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              Visibility="Collapsed" IsHitTestVisible="False" Background="Transparent">
 
+    <UserControl.Resources>
+        <Geometry x:Key="ApplauseHandGeometry">M 31,119 L 29,96 C 26,86 21,80 20,68 L 11,49 C 8,43 10,37 15,36 C 18,35 21,37 24,41 L 32,54 L 32,24 C 32,18 36,14 40,15 C 44,15 46,18 46,23 L 46,12 C 46,6 49,3 53,3 C 58,3 61,7 61,12 L 61,17 C 61,11 65,8 69,9 C 73,9 77,12 77,17 L 77,24 C 77,19 81,16 85,17 C 89,18 92,21 92,27 L 92,68 C 92,82 86,90 84,97 L 84,119 Z</Geometry>
+        <Geometry x:Key="ApplauseHandCreases">M 46,25 L 46,54 M 61,19 L 61,52 M 77,26 L 77,55 M 32,54 C 39,56 44,65 43,74 M 42,83 C 55,88 70,87 80,81 M 36,100 C 49,104 65,104 78,99</Geometry>
+        <LinearGradientBrush x:Key="ApplauseHandBrush" StartPoint="0,0" EndPoint="1,1">
+            <GradientStop Color="#FFF0D2" Offset="0" />
+            <GradientStop Color="#F9C78F" Offset="0.6" />
+            <GradientStop Color="#EBAA71" Offset="1" />
+        </LinearGradientBrush>
+        <LinearGradientBrush x:Key="ApplauseBackHandBrush" StartPoint="0,0" EndPoint="1,1">
+            <GradientStop Color="#FFE6BF" Offset="0" />
+            <GradientStop Color="#EFB780" Offset="0.65" />
+            <GradientStop Color="#D89460" Offset="1" />
+        </LinearGradientBrush>
+        <LinearGradientBrush x:Key="ApplauseCardBrush" StartPoint="0,0" EndPoint="1,1">
+            <GradientStop Color="#FFFEFB" Offset="0" />
+            <GradientStop Color="#FFF8EB" Offset="0.65" />
+            <GradientStop Color="#F2EEFF" Offset="1" />
+        </LinearGradientBrush>
+    </UserControl.Resources>
+
     <Grid x:Name="Root" Background="Transparent" Opacity="1">
         <Rectangle x:Name="DimLayer" Fill="#080D20" Opacity="0" IsHitTestVisible="False" />
 
@@ -71,6 +91,89 @@
                             <Rectangle x:Name="MediumSweep" Width="0" Height="3" RadiusX="1.5" RadiusY="1.5"
                                        HorizontalAlignment="Left" Fill="{DynamicResource AccentGradient}" />
                         </Border>
+                    </StackPanel>
+                </Border>
+            </Grid>
+
+            <Ellipse x:Name="ApplauseGlow" Width="280" Height="280" Visibility="Collapsed"
+                     Opacity="0" RenderTransformOrigin="0.5,0.5">
+                <Ellipse.Fill>
+                    <RadialGradientBrush>
+                        <GradientStop Color="#90FFD993" Offset="0" />
+                        <GradientStop Color="#38F6C16B" Offset="0.5" />
+                        <GradientStop Color="#00F6C16B" Offset="1" />
+                    </RadialGradientBrush>
+                </Ellipse.Fill>
+            </Ellipse>
+            <Ellipse x:Name="ApplauseWave1" Width="100" Height="100" Stroke="#E6B96C"
+                     StrokeThickness="2" Visibility="Collapsed" Opacity="0"
+                     RenderTransformOrigin="0.5,0.5" />
+            <Ellipse x:Name="ApplauseWave2" Width="100" Height="100" Stroke="#B7A2F3"
+                     StrokeThickness="1.5" Visibility="Collapsed" Opacity="0"
+                     RenderTransformOrigin="0.5,0.5" />
+            <Ellipse x:Name="ApplauseWave3" Width="100" Height="100" Stroke="#7AD8C6"
+                     StrokeThickness="1.5" Visibility="Collapsed" Opacity="0"
+                     RenderTransformOrigin="0.5,0.5" />
+
+            <Grid x:Name="ApplauseCard" Width="292" Height="274" Visibility="Collapsed"
+                  Opacity="0" RenderTransformOrigin="0.5,0.5">
+                <Border Background="{StaticResource ApplauseCardBrush}" CornerRadius="22"
+                        BorderBrush="#EEDFCC" BorderThickness="1" Padding="16"
+                        Effect="{DynamicResource ShadowMedium}">
+                    <StackPanel>
+                        <TextBlock x:Name="ApplauseBadge" Text="完成 · 送给努力的你" FontSize="10"
+                                   FontWeight="SemiBold" Foreground="#9A7545" HorizontalAlignment="Center" />
+                        <Viewbox x:Name="ApplauseHands" Height="142" Margin="0,8,0,0" Stretch="Uniform">
+                            <Canvas Width="260" Height="170">
+                                <Canvas x:Name="RightHand" Width="100" Height="132"
+                                        Canvas.Left="126" Canvas.Top="18">
+                                    <Canvas.RenderTransform>
+                                        <TransformGroup>
+                                            <ScaleTransform ScaleX="-1" CenterX="50" />
+                                            <RotateTransform x:Name="RightHandRotation" Angle="-8" CenterX="50" CenterY="112" />
+                                            <TranslateTransform x:Name="RightHandTravel" X="16" />
+                                        </TransformGroup>
+                                    </Canvas.RenderTransform>
+                                    <Path Data="{StaticResource ApplauseHandGeometry}" Fill="{StaticResource ApplauseBackHandBrush}"
+                                          Stroke="#B5784B" StrokeThickness="1.4" StrokeLineJoin="Round" />
+                                    <Path Data="{StaticResource ApplauseHandCreases}" Stroke="#AA693F" Opacity="0.42"
+                                          StrokeThickness="1.2" StrokeStartLineCap="Round" StrokeEndLineCap="Round" />
+                                    <Path Data="M 28,108 Q 55,114 86,107 L 87,130 L 28,130 Z"
+                                          Fill="#9C8DE0" Stroke="#7864BF" StrokeThickness="1.2" StrokeLineJoin="Round" />
+                                    <Path Data="M 33,115 Q 55,119 81,114" Stroke="#DCD4FF" StrokeThickness="2" />
+                                </Canvas>
+                                <Canvas x:Name="LeftHand" Width="100" Height="132"
+                                        Canvas.Left="36" Canvas.Top="18">
+                                    <Canvas.RenderTransform>
+                                        <TransformGroup>
+                                            <RotateTransform x:Name="LeftHandRotation" Angle="8" CenterX="50" CenterY="112" />
+                                            <TranslateTransform x:Name="LeftHandTravel" X="-16" />
+                                        </TransformGroup>
+                                    </Canvas.RenderTransform>
+                                    <Path Data="{StaticResource ApplauseHandGeometry}" Fill="{StaticResource ApplauseHandBrush}"
+                                          Stroke="#BA7A4D" StrokeThickness="1.4" StrokeLineJoin="Round" />
+                                    <Path Data="{StaticResource ApplauseHandCreases}" Stroke="#B7794D" Opacity="0.45"
+                                          StrokeThickness="1.2" StrokeStartLineCap="Round" StrokeEndLineCap="Round" />
+                                    <Path Data="M 36,25 L 36,47 M 50,13 L 50,43 M 65,20 L 65,44 M 81,30 L 81,46"
+                                          Stroke="#FFF6E2" Opacity="0.8" StrokeThickness="2"
+                                          StrokeStartLineCap="Round" StrokeEndLineCap="Round" />
+                                    <Path Data="M 28,108 Q 55,114 86,107 L 87,130 L 28,130 Z"
+                                          Fill="{DynamicResource AccentGradient}" Stroke="#7560C0" StrokeThickness="1.2"
+                                          StrokeLineJoin="Round" />
+                                    <Path Data="M 33,115 Q 55,119 81,114" Stroke="#DDD6FF" StrokeThickness="2" />
+                                </Canvas>
+                                <Path x:Name="ApplauseSpark" Data="M 130,14 L 130,3 M 108,21 L 100,12 M 152,21 L 160,12 M 109,40 L 99,40 M 151,40 L 161,40"
+                                      Stroke="#EFB258" StrokeThickness="3" Opacity="0"
+                                      StrokeStartLineCap="Round" StrokeEndLineCap="Round"
+                                      RenderTransformOrigin="0.5,0.5" />
+                            </Canvas>
+                        </Viewbox>
+                        <TextBlock x:Name="ApplauseHeadline" Text="为你鼓掌" FontSize="20" FontWeight="Bold"
+                                   Foreground="#4C3B64" HorizontalAlignment="Center" TextAlignment="Center" />
+                        <TextBlock x:Name="ApplauseTitle" FontSize="12" Foreground="#7C6A7D" Margin="0,5,0,0"
+                                   HorizontalAlignment="Center" TextTrimming="CharacterEllipsis" />
+                        <TextBlock x:Name="ApplauseHint" FontSize="11" Foreground="#A18A69" Margin="0,9,0,0"
+                                   HorizontalAlignment="Center" TextAlignment="Center" />
                     </StackPanel>
                 </Border>
             </Grid>

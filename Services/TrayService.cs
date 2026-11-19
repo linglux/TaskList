@@ -14,7 +14,7 @@ public sealed class TrayService : IDisposable
     private readonly ToolStripMenuItem _statusItem;
     private bool _disposed;
 
-    public TrayService(MainViewModel viewModel, Action show, Action quickAdd, Action exit)
+    public TrayService(MainViewModel viewModel, Action show, Action quickAdd, Action settings, Action exit)
     {
         _viewModel = viewModel;
         _icon = LoadPrimaryIcon();
@@ -27,6 +27,7 @@ public sealed class TrayService : IDisposable
         };
         menu.Items.Add("显示主窗口", null, (_, _) => show());
         menu.Items.Add("快速添加任务", null, (_, _) => quickAdd());
+        menu.Items.Add("设置", null, (_, _) => settings());
         menu.Items.Add(new ToolStripSeparator());
         _statusItem = new ToolStripMenuItem(viewModel.TrayStatusText) { Enabled = false };
         menu.Items.Add(_statusItem);

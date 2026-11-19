@@ -58,12 +58,13 @@ public partial class MainWindow : Window
         DataContext = _viewModel;
 
         CelebrationService.PlayHandler = (weight, title, origin) =>
-            Celebration.PlayAsync(weight, title, origin);
+            Celebration.PlayAsync(weight, title, origin, CelebrationService.Effect);
 
         _tray = new TrayService(
             _viewModel,
             ShowFromTray,
             QuickAddFromTray,
+            SettingsFromTray,
             ExitFromTray);
 
         SourceInitialized += OnSourceInitialized;
@@ -84,6 +85,9 @@ public partial class MainWindow : Window
     public void Cleanup()
     {
         CelebrationService.PlayHandler = null;
+        Celebration.Cleanup();
+        _viewModel.Settings.Dispose();
+        SoundService.Cleanup();
         _tray?.Dispose();
         _tray = null;
     }
@@ -92,6 +96,12 @@ public partial class MainWindow : Window
     {
         ShowFromTray();
         Dispatcher.BeginInvoke(new Action(() => _viewModel.QuickAdd()), DispatcherPriority.Loaded);
+    }
+
+    private void SettingsFromTray()
+    {
+        ShowFromTray();
+        Dispatcher.BeginInvoke(new Action(() => _viewModel.NavigateSettingsCommand.Execute(null)), DispatcherPriority.Loaded);
     }
 
     private void ExitFromTray()

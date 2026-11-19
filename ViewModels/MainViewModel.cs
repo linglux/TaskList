@@ -8,7 +8,7 @@ using TaskList.Services;
 
 namespace TaskList.ViewModels;
 
-public enum AppSection { Today, All, Group, History, AllGroups }
+public enum AppSection { Today, All, Group, History, AllGroups, Settings }
 
 public sealed class MainViewModel : ObservableObject
 {
@@ -20,7 +20,7 @@ public sealed class MainViewModel : ObservableObject
     private TaskWeight _newTaskWeight = TaskWeight.Light;
     private GroupViewModel? _newTaskGroup;
     private bool _hasTasks;
-    private bool _soundEnabled;
+
     private int _todayCompleted;
     private int _weekCompleted;
     private int _openTasks;
@@ -35,8 +35,7 @@ public sealed class MainViewModel : ObservableObject
         History = new HistoryViewModel(RefreshAll, ConfirmHistoryDelete);
         Editor = new EditorViewModel();
 
-        _soundEnabled = TaskRepository.GetSetting("SoundEnabled", "1") == "1";
-        SoundService.Enabled = _soundEnabled;
+        Settings = new SettingsViewModel();
 
         _toastTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(6) };
         _toastTimer.Tick += (_, _) => { IsToastVisible = false; _toastTimer.Stop(); };
@@ -55,7 +54,7 @@ public sealed class MainViewModel : ObservableObject
         DeleteTaskCommand = new RelayCommand(p => { if (p is TaskViewModel t) OpenDeleteTaskEditor(t); });
         UndoCommand = new RelayCommand(_ => UndoComplete(), _ => _canUndoToast);
         DismissToastCommand = new RelayCommand(_ => IsToastVisible = false);
-        ToggleSoundCommand = new RelayCommand(_ => SoundEnabled = !SoundEnabled);
+        NavigateSettingsCommand = new RelayCommand(_ => SetSection(AppSection.Settings, null));
 
         ReloadGroups();
         LoadTasks();
@@ -68,6 +67,7 @@ public sealed class MainViewModel : ObservableObject
     public ObservableCollection<TaskViewModel> Tasks { get; } = new();
     public HistoryViewModel History { get; }
     public EditorViewModel Editor { get; }
+    public SettingsViewModel Settings { get; }
 
     public ICommand NavigateTodayCommand { get; }
     public ICommand NavigateAllCommand { get; }
@@ -83,14 +83,20 @@ public sealed class MainViewModel : ObservableObject
     public ICommand DeleteTaskCommand { get; }
     public ICommand UndoCommand { get; }
     public ICommand DismissToastCommand { get; }
-    public ICommand ToggleSoundCommand { get; }
+    public ICommand NavigateSettingsCommand { get; }
 
-    public object CurrentView => _section == AppSection.History ? History : this;
+    public object CurrentView => _section switch
+    {
+        AppSection.History => History,
+        AppSection.Settings => Settings,
+        _ => this
+    };
     public bool IsTodayActive => _section == AppSection.Today;
     public bool IsAllActive => _section == AppSection.All;
     public bool IsAllGroupsActive => _section == AppSection.AllGroups;
     public bool IsHistoryActive => _section == AppSection.History;
-    public bool IsHomeSection => _section != AppSection.History;
+    public bool IsSettingsActive => _section == AppSection.Settings;
+    public bool IsHomeSection => _section is not (AppSection.History or AppSection.Settings);
     public bool HasTasks { get => _hasTasks; private set => SetProperty(ref _hasTasks, value); }
 
     public string HeaderTitle => _section switch
@@ -99,6 +105,7 @@ public sealed class MainViewModel : ObservableObject
         AppSection.All => "全部任务",
         AppSection.AllGroups => "所有清单",
         AppSection.Group => _selectedGroup?.Name ?? "我的清单",
+        AppSection.Settings => "设置",
         _ => "历史记录"
     };
 
@@ -108,6 +115,7 @@ public sealed class MainViewModel : ObservableObject
         AppSection.All => "所有清单中尚未完成的任务",
         AppSection.AllGroups => "汇总每个清单里尚未完成的任务",
         AppSection.Group => "这个清单里的待办任务",
+        AppSection.Settings => "个性化音效与完成特效",
         _ => "按天回看已经完成的任务"
     };
 
@@ -149,17 +157,6 @@ public sealed class MainViewModel : ObservableObject
     public string StatsLine => $"今日完成 {_todayCompleted}   ·   本周 {_weekCompleted}   ·   连续 {_streakDays} 天";
     public string TrayStatusText => $"今日已完成 {_todayCompleted} 项 · 待办 {_openTasks} 项";
 
-    public bool SoundEnabled
-    {
-        get => _soundEnabled;
-        set
-        {
-            if (!SetProperty(ref _soundEnabled, value)) return;
-            SoundService.Enabled = value;
-            TaskRepository.SetSetting("SoundEnabled", value ? "1" : "0");
-        }
-    }
-
     public string ToastText { get => _toastText; private set => SetProperty(ref _toastText, value); }
     public bool IsToastVisible
     {
@@ -191,11 +188,12 @@ public sealed class MainViewModel : ObservableObject
 
     private void SetSection(AppSection section, GroupViewModel? group)
     {
+        if (_section == AppSection.Settings && section != AppSection.Settings) Settings.Deactivate();
         _section = section;
         _selectedGroup = group;
         foreach (var g in Groups) g.IsSelected = group is not null && g.Id == group.Id;
         NewTaskGroup = group ?? Groups.FirstOrDefault(g => g.IsInbox);
-        LoadTasks();
+        if (IsHomeSection) LoadTasks();
         NotifyNavigation();
     }
 
@@ -206,6 +204,7 @@ public sealed class MainViewModel : ObservableObject
         OnPropertyChanged(nameof(IsAllActive));
         OnPropertyChanged(nameof(IsAllGroupsActive));
         OnPropertyChanged(nameof(IsHistoryActive));
+        OnPropertyChanged(nameof(IsSettingsActive));
         OnPropertyChanged(nameof(IsHomeSection));
         OnPropertyChanged(nameof(HeaderTitle));
         OnPropertyChanged(nameof(HeaderSubtitle));
@@ -355,7 +354,7 @@ public sealed class MainViewModel : ObservableObject
 
     public void QuickAdd()
     {
-        if (_section == AppSection.History) SetSection(AppSection.All, null);
+        if (!IsHomeSection) SetSection(AppSection.All, null);
         Application.Current?.Dispatcher.BeginInvoke(
             new Action(() => FocusNewTaskRequested?.Invoke()), DispatcherPriority.Loaded);
     }

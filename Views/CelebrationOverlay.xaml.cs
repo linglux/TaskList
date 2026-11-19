@@ -1,3 +1,4 @@
+using System.Threading;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
@@ -53,44 +54,71 @@ public partial class CelebrationOverlay : UserControl
     private readonly Random _random = new();
     private bool _busy;
     private bool _rendering;
+    private bool _cleanedUp;
+    private CancellationTokenSource? _playbackCancellation;
     private DateTime _lastFrame;
 
     public CelebrationOverlay() => InitializeComponent();
 
-    public async Task PlayAsync(TaskWeight weight, string title, Point origin)
+    public async Task PlayAsync(TaskWeight weight, string title, Point origin,
+        CelebrationEffect effect = CelebrationEffect.Original)
     {
-        if (_busy) return;
+        if (_busy || _cleanedUp) return;
         _busy = true;
+        using var cancellation = new CancellationTokenSource();
+        _playbackCancellation = cancellation;
+        var token = cancellation.Token;
         try
         {
             Visibility = Visibility.Visible;
-            await Task.Delay(20);
+            await Task.Delay(20, token);
+            token.ThrowIfCancellationRequested();
             if (ActualWidth <= 0 || ActualHeight <= 0) return;
+
+            if (effect == CelebrationEffect.Applause)
+            {
+                await PlayApplauseAsync(weight, title, origin, token);
+                return;
+            }
 
             switch (weight)
             {
                 case TaskWeight.Light:
-                    await PlayLightAsync(origin);
+                    await PlayLightAsync(origin, token);
                     break;
                 case TaskWeight.Medium:
-                    await PlayMediumAsync(title, origin);
+                    await PlayMediumAsync(title, origin, token);
                     break;
                 default:
-                    await PlayHeavyAsync(title);
+                    await PlayHeavyAsync(title, token);
                     break;
             }
+        }
+        catch (OperationCanceledException) when (token.IsCancellationRequested)
+        {
         }
         finally
         {
             StopRendering();
             Reset();
             Visibility = Visibility.Collapsed;
+            _playbackCancellation = null;
             _busy = false;
         }
     }
 
+    public void Cleanup()
+    {
+        if (_cleanedUp) return;
+        _cleanedUp = true;
+        _playbackCancellation?.Cancel();
+        StopRendering();
+        Reset();
+        Visibility = Visibility.Collapsed;
+    }
+
     // 轻型：纸屑散落 + 浮字，界面不被遮挡（原中型效果）
-    private async Task PlayLightAsync(Point origin)
+    private async Task PlayLightAsync(Point origin, CancellationToken token)
     {
         Spawn(origin, 48, radial: false, gravity: 620);
         StartRendering();
@@ -107,12 +135,13 @@ public partial class CelebrationOverlay : UserControl
             Animate(FloatingLabel, UIElement.OpacityProperty, 1, 0, 260, 640, ease);
         }
 
-        await Task.Delay(1250);
+        await Task.Delay(1250, token);
+        token.ThrowIfCancellationRequested();
         FloatingLabel.Visibility = Visibility.Collapsed;
     }
 
     // 中型：局部光晕 + 光环脉冲 + 成就卡片 + 更多彩带，仍不遮挡界面
-    private async Task PlayMediumAsync(string title, Point origin)
+    private async Task PlayMediumAsync(string title, Point origin, CancellationToken token)
     {
         const double cardWidth = 268;
         const double cardHeight = 130;
@@ -165,14 +194,15 @@ public partial class CelebrationOverlay : UserControl
         Spawn(center, 86, radial: true, gravity: 320);
         StartRendering();
 
-        await Task.Delay(1850);
+        await Task.Delay(1850, token);
+        token.ThrowIfCancellationRequested();
         MediumGlow.Visibility = Visibility.Collapsed;
         MediumRing.Visibility = Visibility.Collapsed;
         MediumCard.Visibility = Visibility.Collapsed;
     }
 
     // 重型：全屏暗化 + 光环扩散 + 粒子爆发 + 祝贺文案
-    private async Task PlayHeavyAsync(string title)
+    private async Task PlayHeavyAsync(string title, CancellationToken token)
     {
         var center = new Point(ActualWidth / 2, ActualHeight / 2);
         var ease = new CubicEase { EasingMode = EasingMode.EaseOut };
@@ -196,9 +226,156 @@ public partial class CelebrationOverlay : UserControl
         Spawn(center, 140, radial: true, gravity: 240);
         StartRendering();
 
-        await Task.Delay(2150);
+        await Task.Delay(2150, token);
+        token.ThrowIfCancellationRequested();
         Animate(Root, UIElement.OpacityProperty, 1, 0, 0, 420, ease);
-        await Task.Delay(440);
+        await Task.Delay(440, token);
+    }
+
+    private async Task PlayApplauseAsync(TaskWeight weight, string title, Point origin, CancellationToken token)
+    {
+        int intensity = weight switch { TaskWeight.Light => 0, TaskWeight.Medium => 1, _ => 2 };
+        int claps = intensity switch { 0 => 2, 1 => 3, _ => 5 };
+        int cycleMs = intensity switch { 0 => 380, 1 => 370, _ => 340 };
+        int totalMs = 220 + claps * cycleMs + 420;
+        double width = intensity switch { 0 => 244, 1 => 292, _ => 344 };
+        double height = intensity switch { 0 => 230, 1 => 274, _ => 328 };
+        width = Math.Min(width, Math.Max(120, ActualWidth - 24));
+        double left = intensity == 2
+            ? (ActualWidth - width) / 2
+            : Math.Clamp(origin.X - width * 0.35, 12, Math.Max(12, ActualWidth - width - 12));
+        double top = intensity == 2
+            ? Math.Max(12, (ActualHeight - height) / 2)
+            : Math.Clamp(origin.Y - height * 0.55, 12, Math.Max(12, ActualHeight - height - 12));
+        var ease = new CubicEase { EasingMode = EasingMode.EaseOut };
+        var back = new BackEase { EasingMode = EasingMode.EaseOut, Amplitude = 0.35 };
+
+        ApplauseCard.Width = width;
+        ApplauseCard.Height = height;
+        ApplauseHands.Height = intensity switch { 0 => 106, 1 => 142, _ => 184 };
+        ApplauseHeadline.FontSize = intensity switch { 0 => 17, 1 => 20, _ => 26 };
+        ApplauseBadge.Text = intensity switch
+        {
+            0 => "完成 · 轻型任务",
+            1 => "完成 · 中型任务",
+            _ => "完成 · 重型任务"
+        };
+        ApplauseHeadline.Text = intensity switch
+        {
+            0 => "做得好，为你鼓掌",
+            1 => "这一程，很扎实",
+            _ => "为你热烈鼓掌"
+        };
+        ApplauseHint.Text = intensity switch
+        {
+            0 => "这一小步，也值得肯定",
+            1 => "认真推进的每一步，都算数",
+            _ => "漂亮收官，掌声属于努力的你"
+        };
+        ApplauseTitle.Text = title.Length > 38 ? title[..38] + "…" : title;
+        ApplauseTitle.MaxWidth = width - 36;
+        Canvas.SetLeft(ApplauseCard, left);
+        Canvas.SetTop(ApplauseCard, top);
+        ApplauseCard.Visibility = Visibility.Visible;
+
+        var cardScale = new ScaleTransform(0.84, 0.84);
+        var cardTravel = new TranslateTransform(0, 16);
+        var cardTransform = new TransformGroup();
+        cardTransform.Children.Add(cardScale);
+        cardTransform.Children.Add(cardTravel);
+        ApplauseCard.RenderTransform = cardTransform;
+        Animate(cardScale, ScaleTransform.ScaleXProperty, 0.84, 1, 0, 360, back);
+        Animate(cardScale, ScaleTransform.ScaleYProperty, 0.84, 1, 0, 360, back);
+        AnimateSequence(ApplauseCard, UIElement.OpacityProperty, 0, totalMs, 1,
+            (0, 0), (0.12, 1), ((totalMs - 300.0) / totalMs, 1), (1, 0));
+        AnimateSequence(cardTravel, TranslateTransform.YProperty, 0, totalMs, 1,
+            (0, 16), (0.18, 0), ((totalMs - 300.0) / totalMs, 0), (1, -12));
+
+        var center = new Point(left + width / 2, top + 39 + ApplauseHands.Height * 0.2);
+        ApplauseGlow.Visibility = Visibility.Visible;
+        Canvas.SetLeft(ApplauseGlow, center.X - 140);
+        Canvas.SetTop(ApplauseGlow, center.Y - 140);
+        var glowScale = new ScaleTransform(0.65, 0.65);
+        ApplauseGlow.RenderTransform = glowScale;
+        Animate(glowScale, ScaleTransform.ScaleXProperty, 0.65, 1.35 + intensity * 0.35, 0, totalMs, ease);
+        Animate(glowScale, ScaleTransform.ScaleYProperty, 0.65, 1.35 + intensity * 0.35, 0, totalMs, ease);
+        AnimateSequence(ApplauseGlow, UIElement.OpacityProperty, 0, totalMs, 1,
+            (0, 0), (0.18, 0.6 + intensity * 0.15), (0.65, 0.5), (1, 0));
+        if (intensity == 2)
+            AnimateSequence(DimLayer, UIElement.OpacityProperty, 0, totalMs, 1,
+                (0, 0), (0.15, 0.38), ((totalMs - 300.0) / totalMs, 0.38), (1, 0));
+
+        AnimateClapping(LeftHandRotation, RotateTransform.AngleProperty, 8, 24, cycleMs, claps);
+        AnimateClapping(RightHandRotation, RotateTransform.AngleProperty, -8, -24, cycleMs, claps);
+        AnimateClapping(LeftHandTravel, TranslateTransform.XProperty, -16, -2, cycleMs, claps);
+        AnimateClapping(RightHandTravel, TranslateTransform.XProperty, 16, 2, cycleMs, claps);
+        AnimateSequence(ApplauseSpark, UIElement.OpacityProperty, 220, cycleMs, claps,
+            (0, 0), (0.34, 0), (0.39, 1), (0.7, 0), (1, 0));
+        AnimateApplauseWave(ApplauseWave1, center, 220, cycleMs, claps, 2.8 + intensity * 0.8);
+        if (intensity >= 1)
+            AnimateApplauseWave(ApplauseWave2, center, 290, cycleMs, claps, 3.5 + intensity * 0.8);
+        if (intensity == 2)
+            AnimateApplauseWave(ApplauseWave3, center, 360, cycleMs, claps, 5.1);
+
+        StartRendering();
+        int impactMs = 220 + (int)(cycleMs * 0.38);
+        await Task.Delay(impactMs, token);
+        token.ThrowIfCancellationRequested();
+        int confettiCount = intensity switch { 0 => 12, 1 => 20, _ => 30 };
+        Spawn(center, confettiCount, radial: true, gravity: 360);
+        for (int clap = 1; clap < claps; clap++)
+        {
+            await Task.Delay(cycleMs, token);
+            token.ThrowIfCancellationRequested();
+            Spawn(center, confettiCount, radial: true, gravity: 360);
+        }
+        await Task.Delay(totalMs - impactMs - (claps - 1) * cycleMs, token);
+    }
+
+    private void AnimateClapping(DependencyObject target, DependencyProperty property,
+        double open, double closed, int cycleMs, int claps)
+    {
+        AnimateSequence(target, property, 220, cycleMs, claps,
+            (0, open), (0.38, closed), (0.48, closed), (0.9, open), (1, open));
+    }
+
+    private void AnimateApplauseWave(Ellipse wave, Point center, int delayMs,
+        int cycleMs, int claps, double expansion)
+    {
+        wave.Visibility = Visibility.Visible;
+        Canvas.SetLeft(wave, center.X - 50);
+        Canvas.SetTop(wave, center.Y - 50);
+        var scale = new ScaleTransform(0.25, 0.25);
+        wave.RenderTransform = scale;
+        AnimateSequence(scale, ScaleTransform.ScaleXProperty, delayMs, cycleMs, claps,
+            (0, 0.25), (0.38, 0.25), (1, expansion));
+        AnimateSequence(scale, ScaleTransform.ScaleYProperty, delayMs, cycleMs, claps,
+            (0, 0.25), (0.38, 0.25), (1, expansion));
+        AnimateSequence(wave, UIElement.OpacityProperty, delayMs, cycleMs, claps,
+            (0, 0), (0.37, 0), (0.4, 0.75), (1, 0));
+    }
+
+    private void AnimateSequence(DependencyObject target, DependencyProperty property,
+        int delayMs, int durationMs, int repetitions, params (double Progress, double Value)[] frames)
+    {
+        var animation = new DoubleAnimationUsingKeyFrames
+        {
+            BeginTime = TimeSpan.FromMilliseconds(delayMs),
+            Duration = TimeSpan.FromMilliseconds(durationMs),
+            RepeatBehavior = new RepeatBehavior(repetitions)
+        };
+        foreach (var (progress, value) in frames)
+        {
+            animation.KeyFrames.Add(new EasingDoubleKeyFrame(value,
+                KeyTime.FromTimeSpan(TimeSpan.FromMilliseconds(durationMs * progress)),
+                new CubicEase { EasingMode = EasingMode.EaseInOut }));
+        }
+        Storyboard.SetTarget(animation, target);
+        Storyboard.SetTargetProperty(animation, new PropertyPath(property));
+        var storyboard = new Storyboard();
+        storyboard.Children.Add(animation);
+        storyboard.Begin();
+        _animated.Add((target, property));
     }
 
     private void AnimateRing(Ellipse ring, int delayMs, IEasingFunction ease)
@@ -335,6 +512,30 @@ public partial class CelebrationOverlay : UserControl
         MediumCard.Visibility = Visibility.Collapsed;
         MediumCard.Opacity = 0;
         MediumSweep.Width = 0;
+
+        ApplauseCard.Visibility = Visibility.Collapsed;
+        ApplauseCard.Opacity = 0;
+        ApplauseCard.RenderTransform = Transform.Identity;
+        ApplauseCard.Width = 292;
+        ApplauseCard.Height = 274;
+        ApplauseHands.Height = 142;
+        ApplauseHeadline.FontSize = 20;
+        ApplauseTitle.Text = string.Empty;
+        ApplauseGlow.Visibility = Visibility.Collapsed;
+        ApplauseGlow.Opacity = 0;
+        ApplauseGlow.RenderTransform = new ScaleTransform(0.65, 0.65);
+        ApplauseSpark.Opacity = 0;
+        LeftHandRotation.Angle = 8;
+        RightHandRotation.Angle = -8;
+        LeftHandTravel.X = -16;
+        RightHandTravel.X = 16;
+        foreach (var wave in new[] { ApplauseWave1, ApplauseWave2, ApplauseWave3 })
+        {
+            wave.Visibility = Visibility.Collapsed;
+            wave.Opacity = 0;
+            wave.RenderTransform = new ScaleTransform(0.25, 0.25);
+        }
+
         if (MessagePanel.RenderTransform is ScaleTransform scale)
         {
             scale.ScaleX = 0.75;

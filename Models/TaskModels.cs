@@ -7,6 +7,12 @@ public enum TaskWeight
     Heavy = 2
 }
 
+public enum CelebrationEffect
+{
+    Original = 0,
+    Applause = 1
+}
+
 public sealed class TaskItem
 {
     public long Id { get; set; }
