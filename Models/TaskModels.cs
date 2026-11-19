@@ -10,7 +10,11 @@ public enum TaskWeight
 public enum CelebrationEffect
 {
     Original = 0,
-    Applause = 1
+    Applause = 1,
+    MinimalCheck = 2,
+    CompletionStamp = 3,
+    Starlight = 4,
+    Fireworks = 5
 }
 
 public sealed class TaskItem

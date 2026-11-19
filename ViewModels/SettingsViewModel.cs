@@ -126,7 +126,15 @@ public sealed class SettingsViewModel : ObservableObject, IDisposable
                 TaskRepository.SetSetting("CelebrationEffect", value.ToString());
                 SetProperty(ref _selectedEffect, value);
                 CelebrationService.Effect = value;
-                StatusMessage = value == CelebrationEffect.Applause ? "已选择鼓掌特效。" : "已选择原有分级特效。";
+                StatusMessage = value switch
+                {
+                    CelebrationEffect.Applause => "已选择鼓掌特效。",
+                    CelebrationEffect.MinimalCheck => "已选择极简勾选特效。",
+                    CelebrationEffect.CompletionStamp => "已选择完成印章特效。",
+                    CelebrationEffect.Starlight => "已选择星光汇聚特效。",
+                    CelebrationEffect.Fireworks => "已选择礼花绽放特效。",
+                    _ => "已选择原有分级特效。"
+                };
             }
             catch (Exception ex) { ReportSaveFailure(ex, nameof(SelectedEffect)); }
         }
