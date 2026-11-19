@@ -70,6 +70,13 @@ public partial class MainWindow : Window
         SourceInitialized += OnSourceInitialized;
         StateChanged += OnStateChanged;
         Closing += OnClosing;
+        ContentRendered += OnContentRendered;
+    }
+
+    private void OnContentRendered(object? sender, EventArgs e)
+    {
+        ContentRendered -= OnContentRendered;
+        SoundService.WarmUp();
     }
 
     public void ShowFromTray()

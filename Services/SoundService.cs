@@ -33,19 +33,24 @@ public static class SoundService
     private const uint SndAsync = 0x0001;
     private const uint SndNoDefault = 0x0002;
 
-    private static readonly byte[] Chime = BuildSound(
-        new[] { 523.25, 659.25, 783.99, 1046.50 },
-        new[] { 0.0, 0.09, 0.18, 0.30 }, 1100, 4.2);
+    private static Task<byte[][]>? _builtInSounds;
+    private static readonly GCHandle[] BuiltInPins = new GCHandle[3];
+    private static long _playbackVersion;
+    private static bool _defaultPlaying;
 
-    private static readonly byte[] MidChime = BuildSound(
-        new[] { 659.25, 830.61, 987.77 }, new[] { 0.0, 0.08, 0.17 }, 620, 6.5);
+    private static Task<byte[][]> PrepareBuiltInSounds()
+        => _builtInSounds ??= Task.Run(() => new[]
+        {
+            BuildSound(new[] { 880.0, 1318.51 }, new[] { 0.0, 0.05 }, 320, 12.0),
+            BuildSound(new[] { 659.25, 830.61, 987.77 }, new[] { 0.0, 0.08, 0.17 }, 620, 6.5),
+            BuildSound(new[] { 523.25, 659.25, 783.99, 1046.50 },
+                new[] { 0.0, 0.09, 0.18, 0.30 }, 1100, 4.2)
+        });
 
-    private static readonly byte[] Tick = BuildSound(
-        new[] { 880.0, 1318.51 }, new[] { 0.0, 0.05 }, 320, 12.0);
-
-    private static GCHandle ChimePin = GCHandle.Alloc(Chime, GCHandleType.Pinned);
-    private static GCHandle MidChimePin = GCHandle.Alloc(MidChime, GCHandleType.Pinned);
-    private static GCHandle TickPin = GCHandle.Alloc(Tick, GCHandleType.Pinned);
+    public static void WarmUp()
+    {
+        if (!_disposed && Enabled) _ = PrepareBuiltInSounds();
+    }
 
     [DllImport("winmm.dll", SetLastError = true)]
     private static extern bool PlaySound(IntPtr pszSound, IntPtr hmod, uint fdwSound);
@@ -65,11 +70,16 @@ public static class SoundService
 
     public static void Stop()
     {
+        _playbackVersion++;
         _playbackTimer?.Stop();
         var player = _player;
         _player = null;
         player?.Close();
-        PlaySound(IntPtr.Zero, IntPtr.Zero, 0);
+        if (_defaultPlaying)
+        {
+            PlaySound(IntPtr.Zero, IntPtr.Zero, 0);
+            _defaultPlaying = false;
+        }
     }
 
     public static void Cleanup()
@@ -77,9 +87,9 @@ public static class SoundService
         if (_disposed) return;
         Stop();
         _disposed = true;
-        if (ChimePin.IsAllocated) ChimePin.Free();
-        if (MidChimePin.IsAllocated) MidChimePin.Free();
-        if (TickPin.IsAllocated) TickPin.Free();
+        for (int i = 0; i < BuiltInPins.Length; i++)
+            if (BuiltInPins[i].IsAllocated) BuiltInPins[i].Free();
+        _builtInSounds = null;
         CustomSounds.Clear();
         PlaybackFailed = null;
     }
@@ -189,16 +199,32 @@ public static class SoundService
         PlaybackFailed?.Invoke(message);
     }
 
-    private static void PlayDefault(TaskWeight weight)
+    private static void PlayDefault(TaskWeight weight) => _ = PlayDefaultAsync(weight);
+
+    private static async Task PlayDefaultAsync(TaskWeight weight)
     {
         if (_disposed) return;
-        var handle = weight switch
+        var version = _playbackVersion;
+        try
         {
-            TaskWeight.Heavy => ChimePin,
-            TaskWeight.Medium => MidChimePin,
-            _ => TickPin
-        };
-        PlaySound(handle.AddrOfPinnedObject(), IntPtr.Zero, SndMemory | SndAsync | SndNoDefault);
+            var sounds = await PrepareBuiltInSounds();
+            if (_disposed || version != _playbackVersion) return;
+            int index = weight switch
+            {
+                TaskWeight.Heavy => 2,
+                TaskWeight.Medium => 1,
+                _ => 0
+            };
+            if (!BuiltInPins[index].IsAllocated)
+                BuiltInPins[index] = GCHandle.Alloc(sounds[index], GCHandleType.Pinned);
+            _defaultPlaying = PlaySound(BuiltInPins[index].AddrOfPinnedObject(), IntPtr.Zero,
+                SndMemory | SndAsync | SndNoDefault);
+        }
+        catch (Exception)
+        {
+            if (!_disposed && version == _playbackVersion)
+                PlaybackFailed?.Invoke("内置音效无法播放，请检查系统音频组件。");
+        }
     }
 
     private static byte[] BuildSound(double[] notes, double[] offsets, int durationMs, double decay)

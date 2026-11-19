@@ -64,13 +64,14 @@ public sealed class SettingsViewModel : ObservableObject, IDisposable
             new SoundSettingViewModel(TaskWeight.Medium, "中型任务", "内置：明亮的三音和弦"),
             new SoundSettingViewModel(TaskWeight.Heavy, "重型任务", "内置：饱满的庆祝旋律")
         };
-        _soundEnabled = TaskRepository.GetSetting("SoundEnabled", "1") == "1";
+        var settings = TaskRepository.GetSettings();
+        _soundEnabled = settings.GetValueOrDefault("SoundEnabled", "1") == "1";
         SoundService.Enabled = _soundEnabled;
-        var effect = TaskRepository.GetSetting("CelebrationEffect", nameof(CelebrationEffect.Original));
+        var effect = settings.GetValueOrDefault("CelebrationEffect", nameof(CelebrationEffect.Original));
         _selectedEffect = Enum.TryParse<CelebrationEffect>(effect, out var parsed) && Enum.IsDefined(parsed)
             ? parsed : CelebrationEffect.Original;
         CelebrationService.Effect = _selectedEffect;
-        foreach (var sound in Sounds) LoadSound(sound);
+        foreach (var sound in Sounds) LoadSound(sound, settings.GetValueOrDefault(SoundKey(sound), string.Empty));
         SoundService.PlaybackFailed += OnPlaybackFailed;
         CelebrationService.PlaybackFailed += OnPlaybackFailed;
 
@@ -193,9 +194,8 @@ public sealed class SettingsViewModel : ObservableObject, IDisposable
            && string.Equals(Path.GetFileName(fileName), fileName, StringComparison.Ordinal)
            && Guid.TryParseExact(Path.GetFileNameWithoutExtension(fileName), "N", out _);
 
-    private void LoadSound(SoundSettingViewModel sound)
+    private void LoadSound(SoundSettingViewModel sound, string json)
     {
-        var json = TaskRepository.GetSetting(SoundKey(sound), string.Empty);
         if (json.Length == 0) return;
         try
         {

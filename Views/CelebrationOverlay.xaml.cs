@@ -165,6 +165,11 @@ public partial class CelebrationOverlay : UserControl
     public CelebrationOverlay()
     {
         InitializeComponent();
+    }
+
+    private void EnsureClapContours()
+    {
+        if (_clapContours.Count > 0) return;
         foreach (var (path, front) in new[]
         {
             (BackHandOutline, false), (BackHandShading, false), (BackHandDetails, false),
@@ -872,6 +877,7 @@ public partial class CelebrationOverlay : UserControl
 
     private void InitializeClapping(int cycleMs, int claps, int intensity)
     {
+        EnsureClapContours();
         _clapCycleMs = cycleMs;
         _clapCount = claps;
         _clapIntensity = intensity;

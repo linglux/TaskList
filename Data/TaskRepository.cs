@@ -119,8 +119,10 @@ public static class TaskRepository
         }
         if (todayOnly)
         {
-            sql += " AND substr(t.CreatedAt, 1, 10) = $day";
-            cmd.Parameters.AddWithValue("$day", DateTime.Today.ToString(Database.DayFormat));
+            var today = DateTime.Today;
+            sql += " AND t.CreatedAt >= $day AND t.CreatedAt < $nextDay";
+            cmd.Parameters.AddWithValue("$day", Database.ToDb(today));
+            cmd.Parameters.AddWithValue("$nextDay", Database.ToDb(today.AddDays(1)));
         }
         sql += " ORDER BY t.Id DESC;";
         cmd.CommandText = sql;
@@ -133,8 +135,9 @@ public static class TaskRepository
     {
         using var c = Database.Open();
         using var cmd = c.CreateCommand();
-        cmd.CommandText = SelectTask + " WHERE substr(t.CompletedAt, 1, 10) = $day ORDER BY t.CompletedAt ASC;";
-        cmd.Parameters.AddWithValue("$day", day.ToString(Database.DayFormat));
+        cmd.CommandText = SelectTask + " WHERE t.CompletedAt >= $day AND t.CompletedAt < $nextDay ORDER BY t.CompletedAt ASC;";
+        cmd.Parameters.AddWithValue("$day", Database.ToDb(day.Date));
+        cmd.Parameters.AddWithValue("$nextDay", Database.ToDb(day.Date.AddDays(1)));
         using var r = cmd.ExecuteReader();
         return ReadAll(r);
     }
@@ -235,11 +238,12 @@ public static class TaskRepository
         using var cmd = c.CreateCommand();
         cmd.CommandText = """
             SELECT
-              (SELECT COUNT(*) FROM Tasks WHERE CompletedAt IS NOT NULL AND substr(CompletedAt,1,10) = $today),
+              (SELECT COUNT(*) FROM Tasks WHERE CompletedAt >= $today AND CompletedAt < $tomorrow),
               (SELECT COUNT(*) FROM Tasks WHERE CompletedAt IS NOT NULL AND CompletedAt >= $week),
               (SELECT COUNT(*) FROM Tasks WHERE CompletedAt IS NULL);
             """;
-        cmd.Parameters.AddWithValue("$today", today.ToString(Database.DayFormat));
+        cmd.Parameters.AddWithValue("$today", Database.ToDb(today));
+        cmd.Parameters.AddWithValue("$tomorrow", Database.ToDb(today.AddDays(1)));
         cmd.Parameters.AddWithValue("$week", Database.ToDb(monday));
 
         int todayCount = 0, weekCount = 0, openCount = 0;
@@ -253,30 +257,42 @@ public static class TaskRepository
             }
         }
 
-        return new TaskStats(todayCount, weekCount, openCount, ComputeStreak(c));
+        return new TaskStats(todayCount, weekCount, openCount, ComputeStreak(c, today));
     }
 
-    private static int ComputeStreak(SqliteConnection c)
+    private static int ComputeStreak(SqliteConnection c, DateTime today)
     {
         using var cmd = c.CreateCommand();
         cmd.CommandText = """
-            SELECT DISTINCT substr(CompletedAt, 1, 10) AS Day FROM Tasks
-            WHERE CompletedAt IS NOT NULL ORDER BY Day DESC;
+            WITH RECURSIVE Streak(Day) AS (
+                SELECT $today
+                WHERE EXISTS (SELECT 1 FROM Tasks WHERE CompletedAt >= $today AND CompletedAt < $tomorrow)
+                UNION ALL
+                SELECT $yesterday
+                WHERE NOT EXISTS (SELECT 1 FROM Tasks WHERE CompletedAt >= $today AND CompletedAt < $tomorrow)
+                  AND EXISTS (SELECT 1 FROM Tasks WHERE CompletedAt >= $yesterday AND CompletedAt < $today)
+                UNION ALL
+                SELECT datetime(Day, '-1 day') FROM Streak
+                WHERE EXISTS (SELECT 1 FROM Tasks
+                              WHERE CompletedAt >= datetime(Day, '-1 day') AND CompletedAt < Day)
+            )
+            SELECT COUNT(*) FROM Streak;
             """;
-        var days = new HashSet<string>();
-        using (var r = cmd.ExecuteReader())
-            while (r.Read()) days.Add(r.GetString(0));
+        cmd.Parameters.AddWithValue("$today", Database.ToDb(today));
+        cmd.Parameters.AddWithValue("$tomorrow", Database.ToDb(today.AddDays(1)));
+        cmd.Parameters.AddWithValue("$yesterday", Database.ToDb(today.AddDays(-1)));
+        return Convert.ToInt32(cmd.ExecuteScalar());
+    }
 
-        var cursor = DateTime.Today;
-        if (!days.Contains(cursor.ToString(Database.DayFormat))) cursor = cursor.AddDays(-1);
-
-        int streak = 0;
-        while (days.Contains(cursor.ToString(Database.DayFormat)))
-        {
-            streak++;
-            cursor = cursor.AddDays(-1);
-        }
-        return streak;
+    public static Dictionary<string, string> GetSettings()
+    {
+        using var c = Database.Open();
+        using var cmd = c.CreateCommand();
+        cmd.CommandText = "SELECT Key, Value FROM Settings;";
+        using var r = cmd.ExecuteReader();
+        var result = new Dictionary<string, string>(StringComparer.Ordinal);
+        while (r.Read()) result.Add(r.GetString(0), r.GetString(1));
+        return result;
     }
 
     public static string GetSetting(string key, string fallback = "")
