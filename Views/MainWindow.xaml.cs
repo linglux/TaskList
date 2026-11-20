@@ -4,6 +4,7 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Interop;
 using System.Windows.Media;
+using System.Windows.Media.Imaging;
 using System.Windows.Threading;
 using TaskList.Helpers;
 using TaskList.Services;
@@ -54,6 +55,7 @@ public partial class MainWindow : Window
     public MainWindow()
     {
         InitializeComponent();
+        TitleBarIcon.Source = CreateTitleBarIcon(Icon);
         _viewModel = new MainViewModel();
         DataContext = _viewModel;
 
@@ -71,6 +73,16 @@ public partial class MainWindow : Window
         StateChanged += OnStateChanged;
         Closing += OnClosing;
         ContentRendered += OnContentRendered;
+    }
+
+    private static ImageSource CreateTitleBarIcon(ImageSource icon)
+    {
+        if (icon is not BitmapFrame frame || frame.Decoder is null) return icon;
+        var source = frame.Decoder.Frames
+            .OrderByDescending(candidate => (long)candidate.PixelWidth * candidate.PixelHeight)
+            .First().Clone();
+        source.Freeze();
+        return source;
     }
 
     private void OnContentRendered(object? sender, EventArgs e)

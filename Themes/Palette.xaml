@@ -7,17 +7,25 @@
     <SolidColorBrush x:Key="SidebarBrush" Color="#151B32" />
     <SolidColorBrush x:Key="SidebarItemBrush" Color="#2B3358" />
     <SolidColorBrush x:Key="SidebarTextBrush" Color="#DCE2F4" />
-    <SolidColorBrush x:Key="SidebarMutedBrush" Color="#8993B5" />
-    <SolidColorBrush x:Key="IconBrush" Color="#8A92A8" />
-    <SolidColorBrush x:Key="ContentBrush" Color="#F5F7FC" />
+    <SolidColorBrush x:Key="SidebarMutedBrush" Color="#A9B5D2" />
+    <SolidColorBrush x:Key="IconBrush" Color="#6F7C94" />
+    <SolidColorBrush x:Key="ContentBrush" Color="#E9EDF5" />
     <SolidColorBrush x:Key="CardBrush" Color="#FFFFFF" />
-    <SolidColorBrush x:Key="SoftBorderBrush" Color="#E7EAF4" />
+    <SolidColorBrush x:Key="SoftBorderBrush" Color="#CBD4E3" />
     <SolidColorBrush x:Key="TextPrimaryBrush" Color="#1D2340" />
-    <SolidColorBrush x:Key="TextSecondaryBrush" Color="#8991A8" />
-    <SolidColorBrush x:Key="TextTertiaryBrush" Color="#AEB5C8" />
-    <SolidColorBrush x:Key="HoverBrush" Color="#EEF0F9" />
+    <SolidColorBrush x:Key="TextSecondaryBrush" Color="#596780" />
+    <SolidColorBrush x:Key="TextTertiaryBrush" Color="#5F6B84" />
+    <SolidColorBrush x:Key="HoverBrush" Color="#E0E6F1" />
     <SolidColorBrush x:Key="DangerBrush" Color="#E5484D" />
     <SolidColorBrush x:Key="WhiteBrush" Color="#FFFFFF" />
+    <SolidColorBrush x:Key="TitleBarBrush" Color="#1A2240" />
+    <SolidColorBrush x:Key="TitleBarBorderBrush" Color="#354362" />
+    <SolidColorBrush x:Key="TitleBarTextBrush" Color="#F5F7FF" />
+    <SolidColorBrush x:Key="TitleBarMutedBrush" Color="#C5D0E8" />
+    <SolidColorBrush x:Key="TitleBarHoverBrush" Color="#334364" />
+    <SolidColorBrush x:Key="TitleBarPressedBrush" Color="#415476" />
+    <SolidColorBrush x:Key="TitleBarBadgeBrush" Color="#334366" />
+    <SolidColorBrush x:Key="TitleBarBadgeBorderBrush" Color="#52628A" />
 
     <LinearGradientBrush x:Key="SidebarGradient" StartPoint="0,0" EndPoint="1,1">
         <GradientStop Color="#1A2240" Offset="0" />

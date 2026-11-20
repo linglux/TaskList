@@ -26,7 +26,7 @@
             </Grid.RowDefinitions>
 
             <!-- 自定义标题栏 -->
-            <Border Grid.Row="0" Background="White" BorderBrush="{DynamicResource SoftBorderBrush}"
+            <Border Grid.Row="0" Background="{DynamicResource TitleBarBrush}" BorderBrush="{DynamicResource TitleBarBorderBrush}"
                     BorderThickness="0,0,0,1" MouseLeftButtonDown="OnTitleBarMouseDown">
                 <Grid>
                     <Grid.ColumnDefinitions>
@@ -36,31 +36,36 @@
                     </Grid.ColumnDefinitions>
 
                     <StackPanel Orientation="Horizontal" Margin="20,0,0,0">
-                        <Image Width="28" Height="28" VerticalAlignment="Center"
-                               Source="{Binding Icon, RelativeSource={RelativeSource AncestorType=Window}}" />
+                        <Image x:Name="TitleBarIcon" Width="28" Height="28" VerticalAlignment="Center"
+                               RenderOptions.BitmapScalingMode="HighQuality"
+                               UseLayoutRounding="True" SnapsToDevicePixels="True" />
                         <TextBlock Text="TaskList" FontSize="15" FontWeight="Bold" VerticalAlignment="Center"
-                                   Margin="10,0,0,0" Foreground="{DynamicResource TextPrimaryBrush}" />
-                        <Border CornerRadius="5" Background="#EEEFFE" Padding="7,2" Margin="10,0,0,0"
+                                   Margin="10,0,0,0" Foreground="{DynamicResource TitleBarTextBrush}" />
+                        <Border CornerRadius="5" Background="{DynamicResource TitleBarBadgeBrush}" Padding="7,2" Margin="10,0,0,0"
+                                BorderBrush="{DynamicResource TitleBarBadgeBorderBrush}" BorderThickness="1"
                                 VerticalAlignment="Center">
-                            <TextBlock Text="{loc:Loc Key='离线'}" FontSize="10" Foreground="{DynamicResource AccentBrush}" />
+                            <TextBlock Text="{loc:Loc Key='离线'}" FontSize="10" Foreground="{DynamicResource TitleBarTextBrush}" />
                         </Border>
                     </StackPanel>
 
                     <TextBlock Grid.Column="1" Text="{Binding HeaderTitle}" FontSize="12.5"
                                VerticalAlignment="Center" HorizontalAlignment="Center"
-                               Foreground="{DynamicResource TextTertiaryBrush}" />
+                               Foreground="{DynamicResource TitleBarMutedBrush}" />
 
                     <StackPanel Grid.Column="2" Orientation="Horizontal" Margin="0,0,10,0">
                         <Button Style="{StaticResource WindowButtonStyle}" Click="OnMinimizeClick" ToolTip="{loc:Loc Key='最小化到托盘'}">
                             <Path Data="{StaticResource IconMinimize}" Style="{StaticResource IconPath}"
+                                  Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"
                                   Width="13" Height="13" />
                         </Button>
                         <Button Style="{StaticResource WindowButtonStyle}" Click="OnMaximizeClick" ToolTip="{loc:Loc Key='最大化 / 还原'}">
                             <Path x:Name="MaximizeIcon" Data="{StaticResource IconMaximize}"
+                                  Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"
                                   Style="{StaticResource IconPath}" Width="13" Height="13" />
                         </Button>
-                        <Button Style="{StaticResource WindowButtonStyle}" Click="OnCloseClick" ToolTip="{loc:Loc Key='关闭到托盘'}">
+                        <Button Style="{StaticResource CloseWindowButtonStyle}" Click="OnCloseClick" ToolTip="{loc:Loc Key='关闭到托盘'}">
                             <Path Data="{StaticResource IconClose}" Style="{StaticResource IconPath}"
+                                  Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"
                                   Width="13" Height="13" />
                         </Button>
                     </StackPanel>
