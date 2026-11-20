@@ -2,6 +2,7 @@ using System.Collections.ObjectModel;
 using System.Windows.Input;
 using TaskList.Helpers;
 using TaskList.Models;
+using static TaskList.Services.LocalizationService;
 
 namespace TaskList.ViewModels;
 
@@ -12,6 +13,7 @@ public sealed class EditorViewModel : ObservableObject
     private EditorMode _mode = EditorMode.None;
     private string _header = string.Empty;
     private string _message = string.Empty;
+    private object?[] _messageArguments = Array.Empty<object?>();
     private string _text = string.Empty;
     private string _notes = string.Empty;
     private TaskWeight _weight = TaskWeight.Light;
@@ -38,9 +40,9 @@ public sealed class EditorViewModel : ObservableObject
     public ICommand ConfirmCommand { get; }
 
     public EditorMode Mode { get => _mode; private set => SetProperty(ref _mode, value); }
-    public string Header { get => _header; private set => SetProperty(ref _header, value); }
-    public string Message { get => _message; private set => SetProperty(ref _message, value); }
-    public string SaveText { get => _saveText; private set => SetProperty(ref _saveText, value); }
+    public string Header { get => T(_header); private set => SetProperty(ref _header, value); }
+    public string Message => T(_message, _messageArguments);
+    public string SaveText { get => T(_saveText); private set => SetProperty(ref _saveText, value); }
     public long TargetId => _targetId;
 
     public string Text { get => _text; set => SetProperty(ref _text, value); }
@@ -85,11 +87,14 @@ public sealed class EditorViewModel : ObservableObject
         SetMode(EditorMode.Group);
     }
 
-    public void OpenConfirm(string header, string message, long targetId, Action<EditorViewModel> onConfirm)
+    public void OpenConfirm(string header, string message, long targetId, Action<EditorViewModel> onConfirm,
+        params object?[] arguments)
     {
         _targetId = targetId;
         Header = header;
-        Message = message;
+        _message = message;
+        _messageArguments = arguments;
+        OnPropertyChanged(nameof(Message));
         SaveText = "确认删除";
         ConfirmAction = onConfirm;
         SaveAction = null;

@@ -1,5 +1,7 @@
 using System.Windows;
 using TaskList.Data;
+using TaskList.Services;
+using static TaskList.Services.LocalizationService;
 
 namespace TaskList;
 
@@ -38,10 +40,11 @@ public partial class App : Application
         try
         {
             Database.Initialize();
+            LocalizationService.Instance.Initialize();
         }
         catch (Exception ex)
         {
-            MessageBox.Show($"本地数据库初始化失败：\n{ex.Message}", "TaskList",
+            MessageBox.Show(T("本地数据库初始化失败：\n{0}", ex.Message), "TaskList",
                 MessageBoxButton.OK, MessageBoxImage.Error);
             Shutdown();
             return;
@@ -79,7 +82,7 @@ public partial class App : Application
 
     private void OnDispatcherUnhandledException(object sender, System.Windows.Threading.DispatcherUnhandledExceptionEventArgs e)
     {
-        MessageBox.Show($"发生未处理的错误：\n{e.Exception.Message}", "TaskList",
+        MessageBox.Show(T("发生未处理的错误：\n{0}", e.Exception.Message), "TaskList",
             MessageBoxButton.OK, MessageBoxImage.Error);
         e.Handled = true;
     }

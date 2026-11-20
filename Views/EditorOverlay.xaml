@@ -1,6 +1,7 @@
 <UserControl x:Class="TaskList.Views.EditorOverlay"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:loc="clr-namespace:TaskList.Helpers"
              IsVisibleChanged="OnIsVisibleChanged"
              Visibility="{Binding IsOpen, Converter={StaticResource BoolToVisibility}}">
 
@@ -10,9 +11,13 @@
                 MouseLeftButtonDown="OnCardClick">
             <StackPanel>
                 <Grid Margin="0,0,0,20">
-                    <TextBlock Text="{Binding Header}" FontSize="19" FontWeight="Bold"
-                               Foreground="{DynamicResource TextPrimaryBrush}" />
-                    <Button HorizontalAlignment="Right" Style="{StaticResource ContentIconButtonStyle}"
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Text="{Binding Header}" FontSize="19" FontWeight="Bold" Margin="0,0,12,0"
+                               TextWrapping="Wrap" Foreground="{DynamicResource TextPrimaryBrush}" />
+                    <Button Grid.Column="1" HorizontalAlignment="Right" Style="{StaticResource ContentIconButtonStyle}"
                             Command="{Binding CancelCommand}">
                         <Path Data="{StaticResource IconClose}" Style="{StaticResource IconPath}" Width="15" Height="15" />
                     </Button>
@@ -20,32 +25,32 @@
 
                 <!-- 任务编辑 -->
                 <StackPanel Visibility="{Binding IsTaskMode, Converter={StaticResource BoolToVisibility}}">
-                    <TextBlock Text="任务标题" FontSize="12" Margin="0,0,0,7"
+                    <TextBlock Text="{loc:Loc Key='任务标题'}" FontSize="12" Margin="0,0,0,7"
                                Foreground="{DynamicResource TextSecondaryBrush}" />
                     <TextBox x:Name="TaskTitleBox" Style="{StaticResource ModernTextBoxStyle}"
                              Text="{Binding Text, UpdateSourceTrigger=PropertyChanged}" />
 
-                    <TextBlock Text="备注（可选）" FontSize="12" Margin="0,16,0,7"
+                    <TextBlock Text="{loc:Loc Key='备注（可选）'}" FontSize="12" Margin="0,16,0,7"
                                Foreground="{DynamicResource TextSecondaryBrush}" />
                     <TextBox Style="{StaticResource ModernTextBoxStyle}" Height="76" AcceptsReturn="True"
                              TextWrapping="Wrap" VerticalContentAlignment="Top"
                              Text="{Binding Notes, UpdateSourceTrigger=PropertyChanged}" />
 
-                    <TextBlock Text="任务类型" FontSize="12" Margin="0,16,0,8"
+                    <TextBlock Text="{loc:Loc Key='任务类型'}" FontSize="12" Margin="0,16,0,8"
                                Foreground="{DynamicResource TextSecondaryBrush}" />
                     <StackPanel Orientation="Horizontal">
-                        <RadioButton Content="轻量" GroupName="EditorWeight" Margin="0,0,8,0"
+                        <RadioButton Content="{loc:Loc Key='轻量'}" GroupName="EditorWeight" Margin="0,0,8,0"
                                      Style="{StaticResource WeightRadioStyle}"
                                      IsChecked="{Binding Weight, Converter={StaticResource EqualityToBool}, ConverterParameter=Light}" />
-                        <RadioButton Content="中型" GroupName="EditorWeight" Margin="0,0,8,0"
+                        <RadioButton Content="{loc:Loc Key='中型'}" GroupName="EditorWeight" Margin="0,0,8,0"
                                      Style="{StaticResource WeightRadioStyle}"
                                      IsChecked="{Binding Weight, Converter={StaticResource EqualityToBool}, ConverterParameter=Medium}" />
-                        <RadioButton Content="重型" GroupName="EditorWeight"
+                        <RadioButton Content="{loc:Loc Key='重型'}" GroupName="EditorWeight"
                                      Style="{StaticResource WeightRadioStyle}"
                                      IsChecked="{Binding Weight, Converter={StaticResource EqualityToBool}, ConverterParameter=Heavy}" />
                     </StackPanel>
 
-                    <TextBlock Text="所属清单" FontSize="12" Margin="0,16,0,7"
+                    <TextBlock Text="{loc:Loc Key='所属清单'}" FontSize="12" Margin="0,16,0,7"
                                Foreground="{DynamicResource TextSecondaryBrush}" />
                     <ComboBox Style="{StaticResource ModernComboBoxStyle}"
                               ItemsSource="{Binding Groups}" DisplayMemberPath="Name"
@@ -54,12 +59,12 @@
 
                 <!-- 清单编辑 -->
                 <StackPanel Visibility="{Binding IsGroupMode, Converter={StaticResource BoolToVisibility}}">
-                    <TextBlock Text="清单名称" FontSize="12" Margin="0,0,0,7"
+                    <TextBlock Text="{loc:Loc Key='清单名称'}" FontSize="12" Margin="0,0,0,7"
                                Foreground="{DynamicResource TextSecondaryBrush}" />
                     <TextBox x:Name="GroupNameBox" Style="{StaticResource ModernTextBoxStyle}"
                              Text="{Binding Text, UpdateSourceTrigger=PropertyChanged}" />
 
-                    <TextBlock Text="标识颜色" FontSize="12" Margin="0,18,0,8"
+                    <TextBlock Text="{loc:Loc Key='标识颜色'}" FontSize="12" Margin="0,18,0,8"
                                Foreground="{DynamicResource TextSecondaryBrush}" />
                     <ListBox ItemsSource="{Binding Colors}" SelectedItem="{Binding SelectedColor}"
                              Background="Transparent" BorderThickness="0" Padding="0"
@@ -83,7 +88,7 @@
                            Visibility="{Binding IsConfirmMode, Converter={StaticResource BoolToVisibility}}" />
 
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,24,0,0">
-                    <Button Content="取消" Style="{StaticResource GhostButtonStyle}"
+                    <Button Content="{loc:Loc Key='取消'}" Style="{StaticResource GhostButtonStyle}"
                             Command="{Binding CancelCommand}" Padding="18,9" Margin="0,0,10,0" />
                     <Button Content="{Binding SaveText}" Style="{StaticResource PrimaryButtonStyle}"
                             Command="{Binding SaveCommand}" Padding="18,9"

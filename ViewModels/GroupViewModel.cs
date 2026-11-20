@@ -22,7 +22,7 @@ public sealed class GroupViewModel : ObservableObject
     public long Id { get; }
     public bool IsInbox { get; }
 
-    public string Name { get => _name; set => SetProperty(ref _name, value); }
+    public string Name { get => IsInbox ? Services.LocalizationService.T("收件箱") : _name; set => SetProperty(ref _name, value); }
     public int Count { get => _count; set => SetProperty(ref _count, value); }
     public bool IsSelected { get => _isSelected; set => SetProperty(ref _isSelected, value); }
 

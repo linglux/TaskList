@@ -8,13 +8,13 @@ public static class CelebrationService
 {
     public static CelebrationEffect Effect { get; set; } = CelebrationEffect.Original;
     public static Func<TaskWeight, string, Point, Task>? PlayHandler { get; set; }
-    public static event Action<string>? PlaybackFailed;
+    public static event Action<LocalizedMessage>? PlaybackFailed;
 
     public static async Task PlayAsync(TaskWeight weight, string title, Point origin)
     {
         var handler = PlayHandler;
         if (handler is null) return;
         try { await handler(weight, title, origin); }
-        catch (Exception ex) { PlaybackFailed?.Invoke($"完成特效播放失败：{ex.Message}"); }
+        catch (Exception ex) { PlaybackFailed?.Invoke(new LocalizedMessage("完成特效播放失败：{0}", ex.Message)); }
     }
 }

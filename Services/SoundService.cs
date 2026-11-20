@@ -11,7 +11,7 @@ namespace TaskList.Services;
 public static class SoundService
 {
     public const double MaxDurationSeconds = 10;
-    public static event Action<string>? PlaybackFailed;
+    public static event Action<LocalizedMessage>? PlaybackFailed;
 
     private static bool _enabled = true;
     private static bool _disposed;
@@ -97,31 +97,31 @@ public static class SoundService
     public static async Task<TimeSpan> ValidateMp3Async(string path, CancellationToken cancellationToken)
     {
         if (!string.Equals(Path.GetExtension(path), ".mp3", StringComparison.OrdinalIgnoreCase))
-            throw new InvalidOperationException("请选择 MP3 文件。");
+            throw new LocalizedException(new("请选择 MP3 文件。"));
 
         var player = new MediaPlayer();
         var completion = new TaskCompletionSource<TimeSpan>(TaskCreationOptions.RunContinuationsAsynchronously);
         player.MediaOpened += (_, _) =>
         {
             if (!player.HasAudio || !player.NaturalDuration.HasTimeSpan)
-                completion.TrySetException(new InvalidOperationException("无法读取这段音频的时长，请选择其他 MP3。"));
+                completion.TrySetException(new LocalizedException(new("无法读取这段音频的时长，请选择其他 MP3。")));
             else
                 completion.TrySetResult(player.NaturalDuration.TimeSpan);
         };
         player.MediaFailed += (_, _) => completion.TrySetException(
-            new InvalidOperationException("无法解码这段 MP3，请确认文件有效且系统媒体组件可用。"));
+            new LocalizedException(new("无法解码这段 MP3，请确认文件有效且系统媒体组件可用。")));
         try
         {
             cancellationToken.ThrowIfCancellationRequested();
             player.Open(new Uri(Path.GetFullPath(path), UriKind.Absolute));
             var duration = await completion.Task.WaitAsync(TimeSpan.FromSeconds(10), cancellationToken);
             if (duration <= TimeSpan.Zero || duration.TotalSeconds > MaxDurationSeconds)
-                throw new InvalidOperationException("请选择时长大于 0 且不超过 10 秒的 MP3。此文件未导入。");
+                throw new LocalizedException(new("请选择时长大于 0 且不超过 10 秒的 MP3。此文件未导入。"));
             return duration;
         }
         catch (TimeoutException)
         {
-            throw new InvalidOperationException("读取 MP3 超时，请选择其他文件或检查系统媒体组件。");
+            throw new LocalizedException(new("读取 MP3 超时，请选择其他文件或检查系统媒体组件。"));
         }
         finally
         {
@@ -196,7 +196,7 @@ public static class SoundService
     {
         Stop();
         PlayDefault(weight);
-        PlaybackFailed?.Invoke(message);
+        PlaybackFailed?.Invoke(new LocalizedMessage(message));
     }
 
     private static void PlayDefault(TaskWeight weight) => _ = PlayDefaultAsync(weight);
@@ -223,7 +223,7 @@ public static class SoundService
         catch (Exception)
         {
             if (!_disposed && version == _playbackVersion)
-                PlaybackFailed?.Invoke("内置音效无法播放，请检查系统音频组件。");
+                PlaybackFailed?.Invoke(new LocalizedMessage("内置音效无法播放，请检查系统音频组件。"));
         }
     }
 

@@ -5,6 +5,7 @@ using System.Windows.Threading;
 using TaskList.Data;
 using TaskList.Models;
 using TaskList.Services;
+using static TaskList.Services.LocalizationService;
 
 namespace TaskList.ViewModels;
 
@@ -26,6 +27,7 @@ public sealed class MainViewModel : ObservableObject
     private int _openTasks;
     private int _streakDays;
     private string _toastText = string.Empty;
+    private object?[] _toastArguments = Array.Empty<object?>();
     private bool _isToastVisible;
     private bool _canUndoToast;
     private long _lastCompletedId;
@@ -101,30 +103,30 @@ public sealed class MainViewModel : ObservableObject
 
     public string HeaderTitle => _section switch
     {
-        AppSection.Today => "今天",
-        AppSection.All => "全部任务",
-        AppSection.AllGroups => "所有清单",
-        AppSection.Group => _selectedGroup?.Name ?? "我的清单",
-        AppSection.Settings => "设置",
-        _ => "历史记录"
+        AppSection.Today => T("今天"),
+        AppSection.All => T("全部任务"),
+        AppSection.AllGroups => T("所有清单"),
+        AppSection.Group => _selectedGroup?.Name ?? T("我的清单"),
+        AppSection.Settings => T("设置"),
+        _ => T("历史记录")
     };
 
     public string HeaderSubtitle => _section switch
     {
-        AppSection.Today => "今天创建的待办 · 一件一件，慢慢来",
-        AppSection.All => "所有清单中尚未完成的任务",
-        AppSection.AllGroups => "汇总每个清单里尚未完成的任务",
-        AppSection.Group => "这个清单里的待办任务",
-        AppSection.Settings => "个性化音效与完成特效",
-        _ => "按天回看已经完成的任务"
+        AppSection.Today => T("今天创建的待办 · 一件一件，慢慢来"),
+        AppSection.All => T("所有清单中尚未完成的任务"),
+        AppSection.AllGroups => T("汇总每个清单里尚未完成的任务"),
+        AppSection.Group => T("这个清单里的待办任务"),
+        AppSection.Settings => T("个性化音效与完成特效"),
+        _ => T("按天回看已经完成的任务")
     };
 
     public string EmptyHint => _section switch
     {
-        AppSection.Today => "今天还没有新建任务，从上面添加第一件吧",
-        AppSection.Group => "这个清单是空的，添加一件想做的事",
-        AppSection.AllGroups => "所有清单里都没有待办，享受这份清爽",
-        _ => "没有未完成的任务，享受这份清爽"
+        AppSection.Today => T("今天还没有新建任务，从上面添加第一件吧"),
+        AppSection.Group => T("这个清单是空的，添加一件想做的事"),
+        AppSection.AllGroups => T("所有清单里都没有待办，享受这份清爽"),
+        _ => T("没有未完成的任务，享受这份清爽")
     };
 
     public string NewTaskTitle
@@ -154,10 +156,10 @@ public sealed class MainViewModel : ObservableObject
     public int OpenTasks { get => _openTasks; private set => SetProperty(ref _openTasks, value); }
     public int StreakDays { get => _streakDays; private set => SetProperty(ref _streakDays, value); }
 
-    public string StatsLine => $"今日完成 {_todayCompleted}   ·   本周 {_weekCompleted}   ·   连续 {_streakDays} 天";
-    public string TrayStatusText => $"今日已完成 {_todayCompleted} 项 · 待办 {_openTasks} 项";
+    public string StatsLine => T("今日完成 {0}   ·   本周 {1}   ·   连续 {2} 天", _todayCompleted, _weekCompleted, _streakDays);
+    public string TrayStatusText => T("今日已完成 {0} 项 · 待办 {1} 项", _todayCompleted, _openTasks);
 
-    public string ToastText { get => _toastText; private set => SetProperty(ref _toastText, value); }
+    public string ToastText => T(_toastText, _toastArguments);
     public bool IsToastVisible
     {
         get => _isToastVisible;
@@ -318,7 +320,7 @@ public sealed class MainViewModel : ObservableObject
         RefreshStats();
         RefreshGroupCounts();
         if (_section == AppSection.History) History.Refresh();
-        ShowToast($"已完成「{task.Title}」", true);
+        ShowToast("已完成「{0}」", true, task.Title);
     }
 
     private void UndoComplete()
@@ -343,9 +345,11 @@ public sealed class MainViewModel : ObservableObject
         foreach (var g in Groups) g.Count = counts.TryGetValue(g.Id, out var n) ? n : 0;
     }
 
-    private void ShowToast(string text, bool canUndo)
+    private void ShowToast(string text, bool canUndo, params object?[] arguments)
     {
-        ToastText = text;
+        _toastText = text;
+        _toastArguments = arguments;
+        OnPropertyChanged(nameof(ToastText));
         CanUndoToast = canUndo;
         IsToastVisible = true;
         _toastTimer.Stop();
@@ -398,15 +402,15 @@ public sealed class MainViewModel : ObservableObject
 
     private void OpenDeleteTaskEditor(TaskViewModel task)
     {
-        Editor.OpenConfirm("删除任务", $"确定删除「{task.Title}」吗？删除后无法恢复。", task.Id, e =>
+        Editor.OpenConfirm("删除任务", "确定删除「{0}」吗？删除后无法恢复。", task.Id, e =>
         {
             TaskRepository.DeleteTask(e.TargetId);
             RefreshAll();
-        });
+        }, task.Title);
     }
 
-    private void ConfirmHistoryDelete(string header, string message, long id, Action<long> onConfirm)
-        => Editor.OpenConfirm(header, message, id, e => onConfirm(e.TargetId));
+    private void ConfirmHistoryDelete(string header, string message, long id, Action<long> onConfirm, object?[] arguments)
+        => Editor.OpenConfirm(header, message, id, e => onConfirm(e.TargetId), arguments);
 
     private void OpenNewGroupEditor()
     {
@@ -429,13 +433,13 @@ public sealed class MainViewModel : ObservableObject
     private void OpenDeleteGroupEditor(GroupViewModel group)
     {
         Editor.OpenConfirm("删除清单",
-            $"确定删除清单「{group.Name}」吗？其中的任务会移动到收件箱，不会丢失。",
+            "确定删除清单「{0}」吗？其中的任务会移动到收件箱，不会丢失。",
             group.Id, e =>
             {
                 TaskRepository.DeleteGroup(e.TargetId);
                 if (_selectedGroup?.Id == e.TargetId) _selectedGroup = null;
                 SetSection(AppSection.All, null);
                 RefreshAll();
-            });
+            }, group.Name);
     }
 }

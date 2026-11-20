@@ -4,11 +4,15 @@ using TaskList.Models;
 namespace TaskList.Helpers;
 
 public sealed record WeightInfo(
-    string Label,
+    string LabelKey,
     SolidColorBrush Foreground,
     SolidColorBrush Background,
     Color Accent,
-    string Glyph);
+    string GlyphKey)
+{
+    public string Label => Services.LocalizationService.T(LabelKey);
+    public string Glyph => Services.LocalizationService.T(GlyphKey);
+}
 
 public static class Palette
 {

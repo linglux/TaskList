@@ -19,18 +19,21 @@ public sealed class SoundSettingViewModel : ObservableObject
     public SoundSettingViewModel(TaskWeight weight, string title, string description)
     {
         Weight = weight;
-        Title = title;
-        Description = description;
+        TitleMessage = new LocalizedMessage(title);
+        _descriptionKey = description;
     }
 
+    private readonly string _descriptionKey;
     public TaskWeight Weight { get; }
-    public string Title { get; }
-    public string Description { get; }
+    public LocalizedMessage TitleMessage { get; }
+    public string Title => TitleMessage.ToString();
+    public string Description => LocalizationService.T(_descriptionKey);
     public string? FileName => _fileName;
     public bool IsCustom => _fileName is not null;
-    public string DisplayName => IsCustom ? _displayName : "内置音效";
+    public object DisplayNameArgument => IsCustom ? _displayName : new LocalizedMessage("内置音效");
+    public string DisplayName => DisplayNameArgument.ToString() ?? string.Empty;
     public string Detail => IsCustom
-        ? $"{_durationSeconds.ToString("0.##", CultureInfo.CurrentCulture)} 秒 · 已复制到应用数据目录"
+        ? LocalizationService.T("{0} 秒 · 已复制到应用数据目录", _durationSeconds.ToString("0.##", LocalizationService.Culture))
         : Description;
 
     public void Apply(string? fileName, string displayName = "", double durationSeconds = 0)
@@ -54,7 +57,7 @@ public sealed class SettingsViewModel : ObservableObject, IDisposable
     private bool _isImporting;
     private bool _isPreviewing;
     private bool _disposed;
-    private string _statusMessage = "设置自动保存，下一次完成任务时生效。";
+    private LocalizedMessage _statusMessage = new("设置自动保存，下一次完成任务时生效。");
 
     public SettingsViewModel()
     {
@@ -81,7 +84,7 @@ public sealed class SettingsViewModel : ObservableObject, IDisposable
         {
             if (p is SoundSettingViewModel sound)
             {
-                StatusMessage = $"正在试听{sound.Title}：{sound.DisplayName}";
+                SetStatus("正在试听{0}：{1}", sound.TitleMessage, sound.DisplayNameArgument);
                 SoundService.Preview(sound.Weight);
             }
         }, _ => !_disposed && !IsImporting);
@@ -98,6 +101,18 @@ public sealed class SettingsViewModel : ObservableObject, IDisposable
     public ICommand CancelImportCommand { get; }
     public ICommand PreviewEffectCommand { get; }
     public string SoundsDirectory => Path.Combine(Database.DataDirectory, "Sounds");
+    public IReadOnlyList<AppLanguage> Languages => LocalizationService.Languages;
+
+    public string SelectedLanguage
+    {
+        get => LocalizationService.Instance.LanguageCode;
+        set
+        {
+            if (_disposed || value == SelectedLanguage) return;
+            try { LocalizationService.Instance.SetLanguage(value); }
+            catch (Exception ex) { ReportSaveFailure(ex, nameof(SelectedLanguage)); }
+        }
+    }
 
     public bool SoundEnabled
     {
@@ -167,9 +182,21 @@ public sealed class SettingsViewModel : ObservableObject, IDisposable
 
     public string StatusMessage
     {
-        get => _statusMessage;
-        private set => SetProperty(ref _statusMessage, value);
+        get => _statusMessage.ToString();
+        private set => SetStatus(value);
     }
+
+    private void SetStatus(string key, params object?[] arguments)
+        => SetStatus(new LocalizedMessage(key, arguments));
+
+    private void SetStatus(LocalizedMessage message)
+    {
+        _statusMessage = message;
+        OnPropertyChanged(nameof(StatusMessage));
+    }
+
+    private static object ErrorMessage(Exception exception)
+        => exception is LocalizedException localized ? localized.LocalizedMessage : exception.Message;
 
     public void Deactivate()
     {
@@ -207,11 +234,11 @@ public sealed class SettingsViewModel : ObservableObject, IDisposable
             sound.Apply(imported.FileName, imported.DisplayName, imported.DurationSeconds);
             var path = Path.Combine(SoundsDirectory, imported.FileName);
             SoundService.SetCustomSound(sound.Weight, path);
-            if (!File.Exists(path)) StatusMessage = $"{sound.Title}的音频文件已丢失，播放时会使用内置音效。";
+            if (!File.Exists(path)) SetStatus("{0}的音频文件已丢失，播放时会使用内置音效。", sound.TitleMessage);
         }
         catch (Exception ex) when (ex is JsonException or InvalidOperationException or ArgumentException)
         {
-            StatusMessage = $"{sound.Title}的音频配置无效，已使用内置音效。";
+            SetStatus("{0}的音频配置无效，已使用内置音效。", sound.TitleMessage);
         }
     }
 
@@ -227,14 +254,14 @@ public sealed class SettingsViewModel : ObservableObject, IDisposable
         {
             var dialog = new OpenFileDialog
             {
-                Title = $"选择{sound.Title}的完成音效（不超过 10 秒）",
-                Filter = "MP3 音频 (*.mp3)|*.mp3",
+                Title = LocalizationService.T("选择{0}的完成音效（不超过 10 秒）", sound.TitleMessage),
+                Filter = LocalizationService.T("MP3 音频 (*.mp3)|*.mp3"),
                 CheckFileExists = true,
                 Multiselect = false
             };
             if (dialog.ShowDialog(Application.Current.MainWindow) != true) return;
             if (!string.Equals(Path.GetExtension(dialog.FileName), ".mp3", StringComparison.OrdinalIgnoreCase))
-                throw new InvalidOperationException("请选择 MP3 文件。");
+                throw new LocalizedException(new("请选择 MP3 文件。"));
 
             SoundService.Stop();
             StatusMessage = "正在复制并检查 MP3，原音效配置暂时保持不变…";
@@ -257,11 +284,11 @@ public sealed class SettingsViewModel : ObservableObject, IDisposable
             sound.Apply(fileName, imported.DisplayName, imported.DurationSeconds);
             SoundService.SetCustomSound(sound.Weight, destination);
             DeleteManagedFile(oldFileName);
-            StatusMessage = $"已导入{sound.Title}音效：{imported.DisplayName}（{duration.TotalSeconds:0.##} 秒）。";
+            SetStatus("已导入{0}音效：{1}（{2:0.##} 秒）。", sound.TitleMessage, imported.DisplayName, duration.TotalSeconds);
             CommandManager.InvalidateRequerySuggested();
         }
         catch (OperationCanceledException) { StatusMessage = "导入已取消，原音效配置保持不变。"; }
-        catch (Exception ex) { StatusMessage = $"导入失败：{ex.Message}"; }
+        catch (Exception ex) { SetStatus("导入失败：{0}", ErrorMessage(ex)); }
         finally
         {
             if (!committed && destination is not null) DeleteManagedFile(Path.GetFileName(destination));
@@ -280,10 +307,10 @@ public sealed class SettingsViewModel : ObservableObject, IDisposable
             SoundService.SetCustomSound(sound.Weight, null);
             sound.Apply(null);
             DeleteManagedFile(oldFileName);
-            StatusMessage = $"{sound.Title}已恢复内置音效。";
+            SetStatus("{0}已恢复内置音效。", sound.TitleMessage);
             CommandManager.InvalidateRequerySuggested();
         }
-        catch (Exception ex) { StatusMessage = $"恢复失败：{ex.Message}"; }
+        catch (Exception ex) { SetStatus("恢复失败：{0}", ErrorMessage(ex)); }
     }
 
     private void DeleteManagedFile(string? fileName)
@@ -300,18 +327,18 @@ public sealed class SettingsViewModel : ObservableObject, IDisposable
         try
         {
             var window = Application.Current.MainWindow;
-            await CelebrationService.PlayAsync(PreviewWeight, "为每一次完成喝彩",
+            await CelebrationService.PlayAsync(PreviewWeight, LocalizationService.T("为每一次完成喝彩"),
                 new Point(window.ActualWidth * 0.62, window.ActualHeight * 0.5));
         }
-        catch (Exception ex) { StatusMessage = $"特效预览失败：{ex.Message}"; }
+        catch (Exception ex) { SetStatus("特效预览失败：{0}", ErrorMessage(ex)); }
         finally { IsPreviewing = false; }
     }
 
-    private void OnPlaybackFailed(string message) => StatusMessage = message;
+    private void OnPlaybackFailed(LocalizedMessage message) => SetStatus(message);
 
     private void ReportSaveFailure(Exception exception, string propertyName)
     {
-        StatusMessage = $"设置保存失败：{exception.Message}";
+        SetStatus("设置保存失败：{0}", ErrorMessage(exception));
         OnPropertyChanged(propertyName);
     }
 }

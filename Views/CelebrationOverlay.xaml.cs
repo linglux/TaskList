@@ -1,3 +1,4 @@
+using System.ComponentModel;
 using System.Diagnostics;
 using System.Threading;
 using System.Windows;
@@ -6,6 +7,7 @@ using System.Windows.Media;
 using System.Windows.Media.Animation;
 using System.Windows.Shapes;
 using TaskList.Models;
+using TaskList.Services;
 
 namespace TaskList.Views;
 
@@ -72,7 +74,7 @@ public partial class CelebrationOverlay : UserControl
                         continue;
                     }
 
-                    throw new InvalidOperationException("Clap contours must use cubic Bezier segments.");
+                    throw new InvalidOperationException(LocalizationService.T("鼓掌轮廓必须使用三次贝塞尔线段。"));
                 }
             }
             SetPose(1, 0);
@@ -161,10 +163,49 @@ public partial class CelebrationOverlay : UserControl
     private bool _cleanedUp;
     private CancellationTokenSource? _playbackCancellation;
     private DateTime _lastFrame;
+    private string _mediumHintKey = MediumHints[0];
+    private string _cheerKey = Cheers[0];
+    private int _applauseTextIntensity = 1;
+    private Viewbox? _activeStamp;
+    private int _stampIntensity;
 
     public CelebrationOverlay()
     {
         InitializeComponent();
+        LocalizationService.Instance.PropertyChanged += OnLanguageChanged;
+        RefreshCelebrationText();
+    }
+
+    private void OnLanguageChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        RefreshCelebrationText();
+        if (_activeStamp is not null)
+            _activeStamp.Child = CreateSealImpression(_stampIntensity);
+    }
+
+    private void RefreshCelebrationText()
+    {
+        HeadlineText.Text = LocalizationService.T("任务完成");
+        MediumHint.Text = LocalizationService.T(_mediumHintKey);
+        EncouragementText.Text = LocalizationService.T(_cheerKey);
+        ApplauseBadge.Text = LocalizationService.T(_applauseTextIntensity switch
+        {
+            0 => "完成 · 轻型任务",
+            1 => "完成 · 中型任务",
+            _ => "完成 · 重型任务"
+        });
+        ApplauseHeadline.Text = LocalizationService.T(_applauseTextIntensity switch
+        {
+            0 => "做得好，为你鼓掌",
+            1 => "这一程，很扎实",
+            _ => "为你热烈鼓掌"
+        });
+        ApplauseHint.Text = LocalizationService.T(_applauseTextIntensity switch
+        {
+            0 => "这一小步，也值得肯定",
+            1 => "认真推进的每一步，都算数",
+            _ => "漂亮收官，掌声属于努力的你"
+        });
     }
 
     private void EnsureClapContours()
@@ -246,6 +287,7 @@ public partial class CelebrationOverlay : UserControl
     {
         if (_cleanedUp) return;
         _cleanedUp = true;
+        LocalizationService.Instance.PropertyChanged -= OnLanguageChanged;
         _playbackCancellation?.Cancel();
         StopRendering();
         Reset();
@@ -288,7 +330,8 @@ public partial class CelebrationOverlay : UserControl
         var back = new BackEase { EasingMode = EasingMode.EaseOut, Amplitude = 0.45 };
 
         MediumTaskTitle.Text = title.Length > 34 ? title[..34] + "…" : title;
-        MediumHint.Text = MediumHints[_random.Next(MediumHints.Length)];
+        _mediumHintKey = MediumHints[_random.Next(MediumHints.Length)];
+        RefreshCelebrationText();
 
         MediumGlow.Visibility = Visibility.Visible;
         Canvas.SetLeft(MediumGlow, center.X - 75);
@@ -348,9 +391,9 @@ public partial class CelebrationOverlay : UserControl
         AnimateRing(Ring2, 140, ease);
         AnimateRing(Ring3, 280, ease);
 
-        HeadlineText.Text = "任务完成";
         TaskTitleText.Text = title.Length > 42 ? title[..42] + "…" : title;
-        EncouragementText.Text = Cheers[_random.Next(Cheers.Length)];
+        _cheerKey = Cheers[_random.Next(Cheers.Length)];
+        RefreshCelebrationText();
 
         Animate(MessagePanel, UIElement.OpacityProperty, 0, 1, 190, 320, ease);
         var messageScale = new ScaleTransform(0.75, 0.75);
@@ -389,24 +432,8 @@ public partial class CelebrationOverlay : UserControl
         ApplauseCard.Height = height;
         ApplauseHands.Height = intensity switch { 0 => 106, 1 => 142, _ => 184 };
         ApplauseHeadline.FontSize = intensity switch { 0 => 17, 1 => 20, _ => 26 };
-        ApplauseBadge.Text = intensity switch
-        {
-            0 => "完成 · 轻型任务",
-            1 => "完成 · 中型任务",
-            _ => "完成 · 重型任务"
-        };
-        ApplauseHeadline.Text = intensity switch
-        {
-            0 => "做得好，为你鼓掌",
-            1 => "这一程，很扎实",
-            _ => "为你热烈鼓掌"
-        };
-        ApplauseHint.Text = intensity switch
-        {
-            0 => "这一小步，也值得肯定",
-            1 => "认真推进的每一步，都算数",
-            _ => "漂亮收官，掌声属于努力的你"
-        };
+        _applauseTextIntensity = intensity;
+        RefreshCelebrationText();
         ApplauseTitle.Text = title.Length > 38 ? title[..38] + "…" : title;
         ApplauseTitle.MaxWidth = width - 36;
         Canvas.SetLeft(ApplauseCard, left);
@@ -502,6 +529,8 @@ public partial class CelebrationOverlay : UserControl
             Height = size,
             Child = CreateSealImpression(intensity)
         }, center);
+        _activeStamp = stamp;
+        _stampIntensity = intensity;
         var scale = new ScaleTransform(1.55, 1.55);
         var rotation = new RotateTransform(-14);
         var travel = new TranslateTransform(0, -36);
@@ -538,7 +567,7 @@ public partial class CelebrationOverlay : UserControl
         await Task.Delay(totalMs, token);
     }
 
-    private static Canvas CreateSealImpression(int intensity)
+    private Canvas CreateSealImpression(int intensity)
     {
         var random = new Random(1979 + intensity);
         var inkGeometry = new GeometryGroup();
@@ -561,22 +590,38 @@ public partial class CelebrationOverlay : UserControl
                 LineJoin = PenLineJoin.Round
             }));
         }
-        var glyphs = new[]
+        if (LocalizationService.IsEnglish)
         {
-            ("M 4,6 L 36,6 L 36,22 L 10,22 M 10,10 L 10,42 Q 10,48 17,48 L 33,48 Q 39,48 39,41 L 39,35", 1.08, 1.12, 113.0, 35.0),
-            ("M 20,2 L 20,7 M 4,17 L 4,9 L 38,9 L 38,17 M 9,22 L 33,22 M 5,31 L 37,31 M 15,31 L 15,39 Q 15,45 6,48 M 27,31 L 27,42 Q 27,48 33,48 L 38,48 L 38,42", 1.22, 1.18, 104.0, 104.0),
-            ("M 6,15 L 34,15 M 9,15 L 9,34 Q 9,44 3,48 M 9,26 L 21,26 L 21,39 Q 21,44 16,44 M 26,3 Q 25,30 35,44 Q 39,50 40,41 M 36,24 Q 30,37 24,45 M 34,5 L 38,9", 1.35, 2.22, 40.0, 46.0)
-        };
-        foreach (var (data, scaleX, scaleY, x, y) in glyphs)
-        {
-            var glyph = Geometry.Parse(data).GetWidenedPathGeometry(new Pen(Brushes.Black, 3.6)
-            {
-                StartLineCap = PenLineCap.Round,
-                EndLineCap = PenLineCap.Round,
-                LineJoin = PenLineJoin.Round
-            });
-            glyph.Transform = new MatrixTransform(scaleX, 0, 0, scaleY, x, y);
+            var text = new FormattedText("DONE", LocalizationService.Culture, FlowDirection.LeftToRight,
+                new Typeface(new FontFamily("Segoe UI"), FontStyles.Normal, FontWeights.Bold, FontStretches.Normal),
+                46, Brushes.Black, VisualTreeHelper.GetDpi(this).PixelsPerDip);
+            var glyph = text.BuildGeometry(new Point());
+            var bounds = glyph.Bounds;
+            double scale = Math.Min(140 / bounds.Width, 90 / bounds.Height);
+            glyph.Transform = new MatrixTransform(scale, 0, 0, scale,
+                100 - (bounds.X + bounds.Width / 2) * scale,
+                100 - (bounds.Y + bounds.Height / 2) * scale);
             inkGeometry.Children.Add(glyph);
+        }
+        else
+        {
+            var glyphs = new[]
+            {
+                ("M 4,6 L 36,6 L 36,22 L 10,22 M 10,10 L 10,42 Q 10,48 17,48 L 33,48 Q 39,48 39,41 L 39,35", 1.08, 1.12, 113.0, 35.0),
+                ("M 20,2 L 20,7 M 4,17 L 4,9 L 38,9 L 38,17 M 9,22 L 33,22 M 5,31 L 37,31 M 15,31 L 15,39 Q 15,45 6,48 M 27,31 L 27,42 Q 27,48 33,48 L 38,48 L 38,42", 1.22, 1.18, 104.0, 104.0),
+                ("M 6,15 L 34,15 M 9,15 L 9,34 Q 9,44 3,48 M 9,26 L 21,26 L 21,39 Q 21,44 16,44 M 26,3 Q 25,30 35,44 Q 39,50 40,41 M 36,24 Q 30,37 24,45 M 34,5 L 38,9", 1.35, 2.22, 40.0, 46.0)
+            };
+            foreach (var (data, scaleX, scaleY, x, y) in glyphs)
+            {
+                var glyph = Geometry.Parse(data).GetWidenedPathGeometry(new Pen(Brushes.Black, 3.6)
+                {
+                    StartLineCap = PenLineCap.Round,
+                    EndLineCap = PenLineCap.Round,
+                    LineJoin = PenLineJoin.Round
+                });
+                glyph.Transform = new MatrixTransform(scaleX, 0, 0, scaleY, x, y);
+                inkGeometry.Children.Add(glyph);
+            }
         }
         inkGeometry.Freeze();
         var wear = new DrawingGroup();
@@ -1165,7 +1210,7 @@ public partial class CelebrationOverlay : UserControl
     {
         if (target is UIElement element) element.BeginAnimation(property, animation);
         else if (target is Animatable animatable) animatable.BeginAnimation(property, animation);
-        else throw new InvalidOperationException("完成特效的动画目标不支持属性动画。");
+        else throw new InvalidOperationException(LocalizationService.T("完成特效的动画目标不支持属性动画。"));
         _animated.Add((target, property));
     }
 
@@ -1182,6 +1227,7 @@ public partial class CelebrationOverlay : UserControl
             ParticleCanvas.Children.Remove(particle.Shape);
         _particles.Clear();
         _fireworkSparks.Clear();
+        _activeStamp = null;
         EffectCanvas.Children.Clear();
 
         Root.Opacity = 1;

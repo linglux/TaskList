@@ -1,12 +1,23 @@
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
+using System.Windows;
 using System.Windows.Input;
+using TaskList.Services;
 
 namespace TaskList.ViewModels;
 
 public abstract class ObservableObject : INotifyPropertyChanged
 {
     public event PropertyChangedEventHandler? PropertyChanged;
+
+    protected ObservableObject()
+    {
+        PropertyChangedEventManager.AddHandler(LocalizationService.Instance, HandleLanguageChanged, string.Empty);
+    }
+
+    private void HandleLanguageChanged(object? sender, PropertyChangedEventArgs e) => OnLanguageChanged();
+
+    protected virtual void OnLanguageChanged() => RaiseAll();
 
     protected bool SetProperty<T>(ref T field, T value, [CallerMemberName] string? name = null)
     {

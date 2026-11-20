@@ -1,31 +1,27 @@
 using System.Collections.ObjectModel;
-using System.Globalization;
 using System.Text;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Threading;
 using TaskList.Data;
 using TaskList.Models;
-using TaskList.ViewModels;
+using static TaskList.Services.LocalizationService;
 
 namespace TaskList.ViewModels;
 
 public sealed class HistoryViewModel : ObservableObject
 {
-    private static readonly CultureInfo Zh = CultureInfo.GetCultureInfo("zh-CN");
-
     private readonly Action _onTasksChanged;
-    private readonly Action<string, string, long, Action<long>> _confirmDelete;
+    private readonly Action<string, string, long, Action<long>, object?[]> _confirmDelete;
     private readonly DispatcherTimer _copyTimer;
     private DateTime _currentDate = DateTime.Today;
     private DateTime _summaryDate = DateTime.Today.AddDays(-1);
     private bool _isSummaryVisible;
     private bool _hasTasks;
-    private string _statsLine = string.Empty;
     private string _summaryText = string.Empty;
     private string _copyFeedback = string.Empty;
 
-    public HistoryViewModel(Action onTasksChanged, Action<string, string, long, Action<long>> confirmDelete)
+    public HistoryViewModel(Action onTasksChanged, Action<string, string, long, Action<long>, object?[]> confirmDelete)
     {
         _onTasksChanged = onTasksChanged;
         _confirmDelete = confirmDelete;
@@ -60,7 +56,7 @@ public sealed class HistoryViewModel : ObservableObject
     public DateTime CurrentDate => _currentDate;
     public DateTime SummaryDate => _summaryDate;
 
-    public string DateTitle => $"{_currentDate:yyyy年M月d日} · {Zh.DateTimeFormat.GetDayName(_currentDate.DayOfWeek)}";
+    public string DateTitle => $"{FormatDate(_currentDate)} · {Culture.DateTimeFormat.GetDayName(_currentDate.DayOfWeek)}";
 
     public string RelativeLabel
     {
@@ -69,18 +65,25 @@ public sealed class HistoryViewModel : ObservableObject
             var delta = (DateTime.Today - _currentDate.Date).Days;
             return delta switch
             {
-                0 => "今天",
-                1 => "昨天",
-                2 => "前天",
-                _ => $"{delta} 天前"
+                0 => T("今天"),
+                1 => T("昨天"),
+                2 => T("前天"),
+                _ => T("{0} 天前", delta)
             };
         }
     }
 
-    public string SummaryDateTitle => $"{_summaryDate:yyyy年M月d日} · {Zh.DateTimeFormat.GetDayName(_summaryDate.DayOfWeek)}";
+    public string SummaryDateTitle => $"{FormatDate(_summaryDate)} · {Culture.DateTimeFormat.GetDayName(_summaryDate.DayOfWeek)}";
+
+    private static string FormatDate(DateTime date) => date.ToString(T("yyyy年M月d日"), Culture);
 
     public bool HasTasks { get => _hasTasks; private set => SetProperty(ref _hasTasks, value); }
-    public string StatsLine { get => _statsLine; private set => SetProperty(ref _statsLine, value); }
+    public string StatsLine => Tasks.Count == 0
+        ? T("这一天还没有完成的任务")
+        : T("共 {0} 项   ·   轻量 {1} / 中型 {2} / 重型 {3}", Tasks.Count,
+            Tasks.Count(t => t.Weight == TaskWeight.Light),
+            Tasks.Count(t => t.Weight == TaskWeight.Medium),
+            Tasks.Count(t => t.Weight == TaskWeight.Heavy));
 
     public bool IsSummaryVisible
     {
@@ -93,7 +96,7 @@ public sealed class HistoryViewModel : ObservableObject
     }
 
     public string SummaryText { get => _summaryText; private set => SetProperty(ref _summaryText, value); }
-    public string CopyFeedback { get => _copyFeedback; private set => SetProperty(ref _copyFeedback, value); }
+    public string CopyFeedback { get => T(_copyFeedback); private set => SetProperty(ref _copyFeedback, value); }
 
     public void LoadLatest()
     {
@@ -131,12 +134,7 @@ public sealed class HistoryViewModel : ObservableObject
         foreach (var item in records) Tasks.Add(new TaskViewModel(item));
         HasTasks = Tasks.Count > 0;
 
-        int light = Tasks.Count(t => t.Weight == TaskWeight.Light);
-        int medium = Tasks.Count(t => t.Weight == TaskWeight.Medium);
-        int heavy = Tasks.Count(t => t.Weight == TaskWeight.Heavy);
-        StatsLine = Tasks.Count == 0
-            ? "这一天还没有完成的任务"
-            : $"共 {Tasks.Count} 项   ·   轻量 {light} / 中型 {medium} / 重型 {heavy}";
+        OnPropertyChanged(nameof(StatsLine));
     }
 
     private void OpenSummary()
@@ -159,12 +157,13 @@ public sealed class HistoryViewModel : ObservableObject
     {
         var records = TaskRepository.GetCompletedOn(_summaryDate);
         var sb = new StringBuilder();
-        sb.AppendLine($"工作日报 · {_summaryDate:yyyy年M月d日}（{Zh.DateTimeFormat.GetDayName(_summaryDate.DayOfWeek)}）");
+        sb.AppendLine(T("工作日报 · {0}（{1}）", FormatDate(_summaryDate),
+            Culture.DateTimeFormat.GetDayName(_summaryDate.DayOfWeek)));
         sb.AppendLine("--------------------------------");
 
         if (records.Count == 0)
         {
-            sb.AppendLine("（这一天没有已完成的任务）");
+            sb.AppendLine(T("（这一天没有已完成的任务）"));
         }
         else
         {
@@ -172,9 +171,10 @@ public sealed class HistoryViewModel : ObservableObject
             {
                 var t = records[i];
                 var weight = PaletteOf(t.Weight);
-                var time = t.CompletedAt?.ToString("HH:mm") ?? "";
+                var time = t.CompletedAt?.ToString("HH:mm", Culture) ?? "";
                 var note = string.IsNullOrWhiteSpace(t.Notes) ? "" : $"  — {t.Notes.Replace("\r", " ").Replace("\n", " ")}";
-                sb.AppendLine($"{i + 1}. [{weight}] {t.Title}（{t.GroupName} · {time} 完成）{note}");
+                sb.AppendLine(T("{0}. [{1}] {2}（{3} · {4} 完成）{5}", i + 1, weight, t.Title,
+                    GroupName(t.GroupId, t.GroupName), time, note));
             }
         }
 
@@ -182,12 +182,18 @@ public sealed class HistoryViewModel : ObservableObject
         int medium = records.Count(t => t.Weight == TaskWeight.Medium);
         int heavy = records.Count(t => t.Weight == TaskWeight.Heavy);
         sb.AppendLine("--------------------------------");
-        sb.Append($"合计 {records.Count} 项：轻量 {light} / 中型 {medium} / 重型 {heavy}");
+        sb.Append(T("合计 {0} 项：轻量 {1} / 中型 {2} / 重型 {3}", records.Count, light, medium, heavy));
         SummaryText = sb.ToString();
         NotifyDateProperties();
     }
 
-    private static string PaletteOf(TaskWeight weight) => Helpers.Palette.Of(weight).Label;
+    private static string PaletteOf(TaskWeight weight) => T(Helpers.Palette.Of(weight).Label);
+
+    protected override void OnLanguageChanged()
+    {
+        if (_isSummaryVisible) BuildSummary();
+        base.OnLanguageChanged();
+    }
 
     private void Copy()
     {
@@ -210,13 +216,13 @@ public sealed class HistoryViewModel : ObservableObject
     {
         if (parameter is not TaskViewModel task) return;
         _confirmDelete("删除完成记录",
-            $"确定删除「{task.Title}」的完成记录吗？删除后无法恢复。",
+            "确定删除「{0}」的完成记录吗？删除后无法恢复。",
             task.Id,
             id =>
             {
                 TaskRepository.DeleteTask(id);
                 _onTasksChanged();
-            });
+            }, new object?[] { task.Title });
     }
 
     private void NotifyDateProperties()

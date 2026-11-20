@@ -1,4 +1,5 @@
-using System.Globalization;
+using TaskList.Services;
+using static TaskList.Services.LocalizationService;
 using System.Windows.Media;
 using TaskList.Helpers;
 using TaskList.Models;
@@ -26,7 +27,7 @@ public sealed class TaskViewModel : ObservableObject
 
     public string Title { get => _title; set => SetProperty(ref _title, value); }
     public string Notes { get => _notes; set => SetProperty(ref _notes, value); }
-    public string GroupName { get => _groupName; set => SetProperty(ref _groupName, value); }
+    public string GroupName { get => LocalizationService.GroupName(_groupId, _groupName); set => SetProperty(ref _groupName, value); }
     public string GroupColor { get => _groupColor; set => SetProperty(ref _groupColor, value); }
     public DateTime CreatedAt => _createdAt;
     public DateTime? CompletedAt => _completedAt;
@@ -52,15 +53,15 @@ public sealed class TaskViewModel : ObservableObject
     {
         get
         {
-            if (_createdAt.Date == DateTime.Today) return "今天 " + _createdAt.ToString("HH:mm");
-            if (_createdAt.Date == DateTime.Today.AddDays(-1)) return "昨天 " + _createdAt.ToString("HH:mm");
-            return _createdAt.ToString("M月d日 HH:mm", CultureInfo.GetCultureInfo("zh-CN"));
+            if (_createdAt.Date == DateTime.Today) return T("今天 {0}", _createdAt.ToString("HH:mm", Culture));
+            if (_createdAt.Date == DateTime.Today.AddDays(-1)) return T("昨天 {0}", _createdAt.ToString("HH:mm", Culture));
+            return _createdAt.ToString(T("M月d日 HH:mm"), Culture);
         }
     }
 
-    public string CompletedTimeText => _completedAt?.ToString("HH:mm") ?? string.Empty;
+    public string CompletedTimeText => _completedAt?.ToString("HH:mm", Culture) ?? string.Empty;
 
-    public string MetaText => $"{_groupName} · 创建于 {CreatedText}";
+    public string MetaText => T("{0} · 创建于 {1}", GroupName, CreatedText);
 
     public void CopyFrom(TaskItem model)
     {

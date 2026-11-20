@@ -3,7 +3,10 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:views="clr-namespace:TaskList.Views"
         xmlns:vm="clr-namespace:TaskList.ViewModels"
-        Title="TaskList · 专注今天" Icon="/Assets/AppIcon.ico"
+        xmlns:loc="clr-namespace:TaskList.Helpers"
+        xmlns:services="clr-namespace:TaskList.Services"
+        Language="{Binding UiLanguage, Source={x:Static services:LocalizationService.Instance}}"
+        Title="{loc:Loc Key='TaskList · 专注今天'}" Icon="/Assets/AppIcon.ico"
         Width="1200" Height="780" MinWidth="980" MinHeight="640"
         WindowStartupLocation="CenterScreen"
         WindowStyle="None" ResizeMode="CanResize" AllowsTransparency="False"
@@ -39,7 +42,7 @@
                                    Margin="10,0,0,0" Foreground="{DynamicResource TextPrimaryBrush}" />
                         <Border CornerRadius="5" Background="#EEEFFE" Padding="7,2" Margin="10,0,0,0"
                                 VerticalAlignment="Center">
-                            <TextBlock Text="离线" FontSize="10" Foreground="{DynamicResource AccentBrush}" />
+                            <TextBlock Text="{loc:Loc Key='离线'}" FontSize="10" Foreground="{DynamicResource AccentBrush}" />
                         </Border>
                     </StackPanel>
 
@@ -48,15 +51,15 @@
                                Foreground="{DynamicResource TextTertiaryBrush}" />
 
                     <StackPanel Grid.Column="2" Orientation="Horizontal" Margin="0,0,10,0">
-                        <Button Style="{StaticResource WindowButtonStyle}" Click="OnMinimizeClick" ToolTip="最小化到托盘">
+                        <Button Style="{StaticResource WindowButtonStyle}" Click="OnMinimizeClick" ToolTip="{loc:Loc Key='最小化到托盘'}">
                             <Path Data="{StaticResource IconMinimize}" Style="{StaticResource IconPath}"
                                   Width="13" Height="13" />
                         </Button>
-                        <Button Style="{StaticResource WindowButtonStyle}" Click="OnMaximizeClick" ToolTip="最大化 / 还原">
+                        <Button Style="{StaticResource WindowButtonStyle}" Click="OnMaximizeClick" ToolTip="{loc:Loc Key='最大化 / 还原'}">
                             <Path x:Name="MaximizeIcon" Data="{StaticResource IconMaximize}"
                                   Style="{StaticResource IconPath}" Width="13" Height="13" />
                         </Button>
-                        <Button Style="{StaticResource WindowButtonStyle}" Click="OnCloseClick" ToolTip="关闭到托盘">
+                        <Button Style="{StaticResource WindowButtonStyle}" Click="OnCloseClick" ToolTip="{loc:Loc Key='关闭到托盘'}">
                             <Path Data="{StaticResource IconClose}" Style="{StaticResource IconPath}"
                                   Width="13" Height="13" />
                         </Button>
@@ -88,7 +91,7 @@
                                 <StackPanel Orientation="Horizontal">
                                     <Path Data="{StaticResource IconFlame}" Style="{StaticResource IconPath}"
                                           Width="13" Height="13" Stroke="#FBBF24" />
-                                    <TextBlock Text="今日进度" FontSize="11.5" Margin="7,0,0,0"
+                                    <TextBlock Text="{loc:Loc Key='今日进度'}" FontSize="11.5" Margin="7,0,0,0"
                                                Foreground="{DynamicResource SidebarMutedBrush}" />
                                 </StackPanel>
                                 <Grid Margin="0,14,0,2">
@@ -100,20 +103,20 @@
                                     <StackPanel>
                                         <TextBlock Text="{Binding TodayCompleted}" FontSize="24" FontWeight="Bold"
                                                    Foreground="White" />
-                                        <TextBlock Text="今日完成" FontSize="10.5" Margin="0,2,0,0"
-                                                   Foreground="{DynamicResource SidebarMutedBrush}" />
+                                        <TextBlock Text="{loc:Loc Key='今日完成'}" FontSize="10.5" Margin="0,2,4,0"
+                                                   TextWrapping="Wrap" Foreground="{DynamicResource SidebarMutedBrush}" />
                                     </StackPanel>
                                     <StackPanel Grid.Column="1">
                                         <TextBlock Text="{Binding OpenTasks}" FontSize="24" FontWeight="Bold"
                                                    Foreground="White" />
-                                        <TextBlock Text="待办任务" FontSize="10.5" Margin="0,2,0,0"
-                                                   Foreground="{DynamicResource SidebarMutedBrush}" />
+                                        <TextBlock Text="{loc:Loc Key='待办任务'}" FontSize="10.5" Margin="0,2,4,0"
+                                                   TextWrapping="Wrap" Foreground="{DynamicResource SidebarMutedBrush}" />
                                     </StackPanel>
                                     <StackPanel Grid.Column="2">
                                         <TextBlock Text="{Binding StreakDays}" FontSize="24" FontWeight="Bold"
                                                    Foreground="White" />
-                                        <TextBlock Text="连续天数" FontSize="10.5" Margin="0,2,0,0"
-                                                   Foreground="{DynamicResource SidebarMutedBrush}" />
+                                        <TextBlock Text="{loc:Loc Key='连续天数'}" FontSize="10.5" Margin="0,2,0,0"
+                                                   TextWrapping="Wrap" Foreground="{DynamicResource SidebarMutedBrush}" />
                                     </StackPanel>
                                 </Grid>
                             </StackPanel>
@@ -131,7 +134,7 @@
                                     </Grid.ColumnDefinitions>
                                     <Path Data="{StaticResource IconCalendar}" Style="{StaticResource IconPathLight}"
                                           Width="17" Height="17" />
-                                    <TextBlock Grid.Column="1" Text="今天" VerticalAlignment="Center" />
+                                    <TextBlock Grid.Column="1" Text="{loc:Loc Key='今天'}" VerticalAlignment="Center" />
                                 </Grid>
                             </Button>
                             <Button Style="{StaticResource NavButtonStyle}" Margin="0,2"
@@ -145,7 +148,7 @@
                                     </Grid.ColumnDefinitions>
                                     <Path Data="{StaticResource IconAll}" Style="{StaticResource IconPathLight}"
                                           Width="17" Height="17" />
-                                    <TextBlock Grid.Column="1" Text="全部任务" VerticalAlignment="Center" />
+                                    <TextBlock Grid.Column="1" Text="{loc:Loc Key='全部任务'}" VerticalAlignment="Center" />
                                 </Grid>
                             </Button>
                             <Button Style="{StaticResource NavButtonStyle}" Margin="0,2"
@@ -159,16 +162,16 @@
                                     </Grid.ColumnDefinitions>
                                     <Path Data="{StaticResource IconHistory}" Style="{StaticResource IconPathLight}"
                                           Width="17" Height="17" />
-                                    <TextBlock Grid.Column="1" Text="历史记录" VerticalAlignment="Center" />
+                                    <TextBlock Grid.Column="1" Text="{loc:Loc Key='历史记录'}" VerticalAlignment="Center" />
                                 </Grid>
                             </Button>
                         </StackPanel>
 
                         <Grid Grid.Row="2" Margin="26,20,16,8">
-                            <TextBlock Text="我的清单" FontSize="11" FontWeight="SemiBold"
+                            <TextBlock Text="{loc:Loc Key='我的清单'}" FontSize="11" FontWeight="SemiBold"
                                        Foreground="{DynamicResource SidebarMutedBrush}" VerticalAlignment="Center" />
                             <Button HorizontalAlignment="Right" Style="{StaticResource SidebarIconButtonStyle}"
-                                    Command="{Binding AddGroupCommand}" ToolTip="新建清单">
+                                    Command="{Binding AddGroupCommand}" ToolTip="{loc:Loc Key='新建清单'}">
                                 <Path Data="{StaticResource IconPlus}" Style="{StaticResource IconPathLight}"
                                       Width="14" Height="14" />
                             </Button>
@@ -181,7 +184,7 @@
                                         Background="{Binding IsAllGroupsActive, Converter={StaticResource ActiveBackground}}"
                                         Foreground="{Binding IsAllGroupsActive, Converter={StaticResource ActiveForeground}}"
                                         Command="{Binding SelectAllGroupsCommand}"
-                                        ToolTip="查看所有清单中的任务">
+                                        ToolTip="{loc:Loc Key='查看所有清单中的任务'}">
                                     <Grid>
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="Auto" />
@@ -190,7 +193,7 @@
                                         </Grid.ColumnDefinitions>
                                         <Ellipse Width="9" Height="9" Fill="{DynamicResource CyanBrush}"
                                                  Margin="0,0,10,0" />
-                                        <TextBlock Grid.Column="1" Text="所有清单" VerticalAlignment="Center"
+                                        <TextBlock Grid.Column="1" Text="{loc:Loc Key='所有清单'}" VerticalAlignment="Center"
                                                    TextTrimming="CharacterEllipsis" />
                                         <Border Grid.Column="2" CornerRadius="8" Background="#22FFFFFF"
                                                 Padding="7,1" VerticalAlignment="Center"
@@ -211,11 +214,11 @@
                                                 CommandParameter="{Binding}">
                                             <Button.ContextMenu>
                                                 <ContextMenu>
-                                                    <MenuItem Header="重命名清单"
+                                                    <MenuItem Header="{loc:Loc Key='重命名清单'}"
                                                               Command="{Binding PlacementTarget.Tag.RenameGroupCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
                                                               CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
                                                               IsEnabled="{Binding IsInbox, Converter={StaticResource BoolToInverse}}" />
-                                                    <MenuItem Header="删除清单"
+                                                    <MenuItem Header="{loc:Loc Key='删除清单'}"
                                                               Command="{Binding PlacementTarget.Tag.DeleteGroupCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
                                                               CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
                                                               IsEnabled="{Binding IsInbox, Converter={StaticResource BoolToInverse}}" />
@@ -250,7 +253,7 @@
                             <Button Style="{StaticResource NavButtonStyle}" Margin="0,2"
                                     Background="{Binding IsSettingsActive, Converter={StaticResource ActiveBackground}}"
                                     Foreground="{Binding IsSettingsActive, Converter={StaticResource ActiveForeground}}"
-                                    Command="{Binding NavigateSettingsCommand}" ToolTip="音效与完成特效设置">
+                                    Command="{Binding NavigateSettingsCommand}" ToolTip="{loc:Loc Key='音效与完成特效设置'}">
                                 <Grid>
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="26" />
@@ -258,11 +261,11 @@
                                     </Grid.ColumnDefinitions>
                                     <Path Data="{StaticResource IconSettings}" Style="{StaticResource IconPathLight}"
                                           Width="16" Height="16" />
-                                    <TextBlock Grid.Column="1" Text="设置" VerticalAlignment="Center" />
+                                    <TextBlock Grid.Column="1" Text="{loc:Loc Key='设置'}" VerticalAlignment="Center" />
                                 </Grid>
                             </Button>
-                            <TextBlock Text="数据仅保存在本机 · 完全离线" FontSize="10.5" Margin="14,10,0,0"
-                                       Foreground="#6C779C" />
+                            <TextBlock Text="{loc:Loc Key='数据仅保存在本机 · 完全离线'}" FontSize="10.5" Margin="14,10,0,0"
+                                       TextWrapping="Wrap" Foreground="#6C779C" />
                         </StackPanel>
                     </Grid>
                 </Border>
@@ -302,7 +305,7 @@
                 </Border>
                 <TextBlock Text="{Binding ToastText}" Foreground="White" FontSize="12.5"
                            VerticalAlignment="Center" MaxWidth="360" TextTrimming="CharacterEllipsis" />
-                <Button Content="撤销" Style="{StaticResource TextButtonStyle}" Margin="16,0,4,0"
+                <Button Content="{loc:Loc Key='撤销'}" Style="{StaticResource TextButtonStyle}" Margin="16,0,4,0"
                         Foreground="#8AB4FF" Command="{Binding UndoCommand}"
                         Visibility="{Binding CanUndoToast, Converter={StaticResource BoolToVisibility}}" />
                 <Button Style="{StaticResource ContentIconButtonStyle}" Width="24" Height="24"

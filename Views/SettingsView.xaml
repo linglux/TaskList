@@ -1,6 +1,7 @@
 <UserControl x:Class="TaskList.Views.SettingsView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:loc="clr-namespace:TaskList.Helpers"
              Background="{DynamicResource ContentBrush}">
     <UserControl.Resources>
         <Style x:Key="SettingsCard" TargetType="Border">
@@ -70,76 +71,90 @@
 
     <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
         <StackPanel Margin="34,28,34,24">
-            <TextBlock Text="设置" FontSize="28" FontWeight="Bold" Foreground="{DynamicResource TextPrimaryBrush}" />
-            <TextBlock Text="把每一次完成，变成属于你的庆祝" FontSize="12.5" Margin="0,7,0,22"
-                       Foreground="{DynamicResource TextSecondaryBrush}" />
+            <TextBlock Text="{loc:Loc Key='设置'}" FontSize="28" FontWeight="Bold" Foreground="{DynamicResource TextPrimaryBrush}" />
+            <TextBlock Text="{loc:Loc Key='把每一次完成，变成属于你的庆祝'}" FontSize="12.5" Margin="0,7,0,22"
+                       Foreground="{DynamicResource TextSecondaryBrush}" TextWrapping="Wrap" />
+
+            <Border Style="{StaticResource SettingsCard}">
+                <StackPanel>
+                    <TextBlock Text="{loc:Loc Key='语言'}" FontSize="17" FontWeight="SemiBold"
+                               Foreground="{DynamicResource TextPrimaryBrush}" />
+                    <TextBlock Text="{loc:Loc Key='切换后立即生效，设置会自动保存。'}" FontSize="12" Margin="0,6,0,0"
+                               Foreground="{DynamicResource TextSecondaryBrush}" TextWrapping="Wrap" />
+                    <ComboBox ItemsSource="{Binding Languages}" SelectedValuePath="Code" DisplayMemberPath="Name"
+                              Style="{StaticResource ModernComboBoxStyle}"
+                              SelectedValue="{Binding SelectedLanguage, Mode=TwoWay}"
+                              HorizontalAlignment="Left" MinWidth="220" Padding="10,8" Margin="0,14,0,0"
+                              AutomationProperties.Name="{loc:Loc Key='界面语言'}" />
+                </StackPanel>
+            </Border>
 
             <Border Style="{StaticResource SettingsCard}">
                 <StackPanel>
                     <Grid Margin="0,0,0,18">
                         <StackPanel Margin="0,0,60,0">
-                            <TextBlock Text="完成音效" FontSize="17" FontWeight="SemiBold"
+                            <TextBlock Text="{loc:Loc Key='完成音效'}" FontSize="17" FontWeight="SemiBold"
                                        Foreground="{DynamicResource TextPrimaryBrush}" />
-                            <TextBlock Text="为轻型、中型、重型任务分别选择一段声音" FontSize="12" Margin="0,6,0,0"
+                            <TextBlock Text="{loc:Loc Key='为轻型、中型、重型任务分别选择一段声音'}" FontSize="12" Margin="0,6,0,0"
                                        Foreground="{DynamicResource TextSecondaryBrush}" TextWrapping="Wrap" />
                         </StackPanel>
                         <CheckBox HorizontalAlignment="Right" Style="{StaticResource SettingsToggle}"
                                   IsChecked="{Binding SoundEnabled, Mode=TwoWay}"
-                                  AutomationProperties.Name="开启完成音效" ToolTip="开启或关闭完成音效" />
+                                  AutomationProperties.Name="{loc:Loc Key='开启完成音效'}" ToolTip="{loc:Loc Key='开启或关闭完成音效'}" />
                     </Grid>
                     <ItemsControl ItemsSource="{Binding Sounds}">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
                                 <Border Background="#F8F9FC" CornerRadius="12" Padding="14" Margin="0,0,0,10">
                                     <Grid>
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="*" />
-                                            <ColumnDefinition Width="Auto" />
-                                        </Grid.ColumnDefinitions>
-                                        <StackPanel Margin="0,0,12,0" VerticalAlignment="Center">
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto" />
+                                            <RowDefinition Height="Auto" />
+                                        </Grid.RowDefinitions>
+                                        <StackPanel VerticalAlignment="Center">
                                             <TextBlock Text="{Binding Title}" FontSize="13" FontWeight="SemiBold"
-                                                       Foreground="{DynamicResource TextPrimaryBrush}" />
+                                                       Foreground="{DynamicResource TextPrimaryBrush}" TextWrapping="Wrap" />
                                             <TextBlock Text="{Binding DisplayName}" ToolTip="{Binding DisplayName}"
                                                        FontSize="12" Margin="0,6,0,0" TextTrimming="CharacterEllipsis"
                                                        Foreground="{DynamicResource AccentBrush}" />
                                             <TextBlock Text="{Binding Detail}" FontSize="10.5" Margin="0,4,0,0" TextWrapping="Wrap"
                                                        Foreground="{DynamicResource TextSecondaryBrush}" />
                                         </StackPanel>
-                                        <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
-                                            <Button Content="选择 MP3" Style="{StaticResource GhostButtonStyle}" Padding="11,8" FontSize="12"
+                                        <WrapPanel Grid.Row="1" Margin="0,12,0,0" VerticalAlignment="Center">
+                                            <Button Content="{loc:Loc Key='选择 MP3'}" Style="{StaticResource GhostButtonStyle}" Padding="11,8" FontSize="12"
                                                     Command="{Binding DataContext.ImportSoundCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                                     CommandParameter="{Binding}" />
-                                            <Button Content="试听" Margin="7,0,0,0" Padding="11,8" FontSize="12"
+                                            <Button Content="{loc:Loc Key='试听'}" Margin="7,0,0,0" Padding="11,8" FontSize="12"
                                                     Style="{StaticResource GhostButtonStyle}"
                                                     Command="{Binding DataContext.PreviewSoundCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                                     CommandParameter="{Binding}" />
-                                            <Button Content="恢复默认" Margin="10,0,0,0" Padding="0,8" FontSize="11.5"
+                                            <Button Content="{loc:Loc Key='恢复默认'}" Margin="10,0,0,0" Padding="0,8" FontSize="11.5"
                                                     Style="{StaticResource TextButtonStyle}"
                                                     Command="{Binding DataContext.ResetSoundCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                                     CommandParameter="{Binding}" />
-                                        </StackPanel>
+                                        </WrapPanel>
                                     </Grid>
                                 </Border>
                             </DataTemplate>
                         </ItemsControl.ItemTemplate>
                     </ItemsControl>
-                    <TextBlock Text="仅支持不超过 10 秒的 MP3；导入后移动或删除原文件不影响使用。"
+                    <TextBlock Text="{loc:Loc Key='仅支持不超过 10 秒的 MP3；导入后移动或删除原文件不影响使用。'}"
                                FontSize="11.5" Margin="0,5,0,0" TextWrapping="Wrap"
                                Foreground="{DynamicResource TextSecondaryBrush}" />
-                    <Grid Margin="0,12,0,0">
-                        <TextBlock Text="试听不受总开关影响，新声音会替换当前声音。" FontSize="11" VerticalAlignment="Center"
-                                   Foreground="{DynamicResource TextTertiaryBrush}" TextWrapping="Wrap" Margin="0,0,110,0" />
-                        <Button Content="停止试听" HorizontalAlignment="Right" Padding="0,4" Style="{StaticResource TextButtonStyle}"
-                                Command="{Binding StopSoundCommand}" />
-                    </Grid>
+                    <StackPanel Margin="0,12,0,0">
+                        <TextBlock Text="{loc:Loc Key='试听不受总开关影响，新声音会替换当前声音。'}" FontSize="11"
+                                   Foreground="{DynamicResource TextTertiaryBrush}" TextWrapping="Wrap" />
+                        <Button Content="{loc:Loc Key='停止试听'}" HorizontalAlignment="Right" Padding="0,4" Margin="0,8,0,0"
+                                Style="{StaticResource TextButtonStyle}" Command="{Binding StopSoundCommand}" />
+                    </StackPanel>
                 </StackPanel>
             </Border>
 
             <Border Style="{StaticResource SettingsCard}">
                 <StackPanel>
-                    <TextBlock Text="完成特效" FontSize="17" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" />
-                    <TextBlock Text="统一使用所选风格，任务越重，庆祝越隆重" FontSize="12" Margin="0,6,0,18"
-                               Foreground="{DynamicResource TextSecondaryBrush}" />
+                    <TextBlock Text="{loc:Loc Key='完成特效'}" FontSize="17" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" />
+                    <TextBlock Text="{loc:Loc Key='统一使用所选风格，任务越重，庆祝越隆重'}" FontSize="12" Margin="0,6,0,18"
+                               Foreground="{DynamicResource TextSecondaryBrush}" TextWrapping="Wrap" />
                     <Grid>
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto" />
@@ -151,87 +166,87 @@
                             <ColumnDefinition Width="*" />
                         </Grid.ColumnDefinitions>
                         <RadioButton Style="{StaticResource EffectChoice}" GroupName="CompletionEffect" Margin="0,0,8,0"
-                                     AutomationProperties.Name="原有分级特效"
+                                     AutomationProperties.Name="{loc:Loc Key='原有分级特效'}"
                                      IsChecked="{Binding SelectedEffect, Converter={StaticResource EqualityToBool}, ConverterParameter=Original}">
                             <StackPanel>
                                 <Path Data="{StaticResource IconSparkle}" Style="{StaticResource IconPath}" HorizontalAlignment="Left"
                                       Stroke="{DynamicResource AccentBrush}" Width="26" Height="26" Margin="0,0,0,14" />
-                                <TextBlock Text="原有分级特效" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" />
-                                <TextBlock Text="从轻快纸屑到成就卡片，再到全屏庆祝，保留熟悉的完成仪式。"
+                                <TextBlock Text="{loc:Loc Key='原有分级特效'}" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" TextWrapping="Wrap" />
+                                <TextBlock Text="{loc:Loc Key='从轻快纸屑到成就卡片，再到全屏庆祝，保留熟悉的完成仪式。'}"
                                            FontSize="11.5" Margin="0,8,0,0" TextWrapping="Wrap" Foreground="{DynamicResource TextSecondaryBrush}" />
                             </StackPanel>
                         </RadioButton>
                         <RadioButton Grid.Column="1" Style="{StaticResource EffectChoice}" GroupName="CompletionEffect" Margin="8,0,0,0"
-                                     AutomationProperties.Name="鼓掌特效"
+                                     AutomationProperties.Name="{loc:Loc Key='鼓掌特效'}"
                                      IsChecked="{Binding SelectedEffect, Converter={StaticResource EqualityToBool}, ConverterParameter=Applause}">
                             <StackPanel>
                                 <Path Data="{StaticResource IconCheck}" Style="{StaticResource IconPath}" HorizontalAlignment="Left"
                                       Stroke="#E59A28" Width="26" Height="26" Margin="0,0,0,14" />
-                                <TextBlock Text="为你鼓掌" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" />
-                                <TextBlock Text="拍合的双手、喝彩波纹与缤纷彩带，每一件完成都值得被看见。"
+                                <TextBlock Text="{loc:Loc Key='为你鼓掌'}" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" TextWrapping="Wrap" />
+                                <TextBlock Text="{loc:Loc Key='拍合的双手、喝彩波纹与缤纷彩带，每一件完成都值得被看见。'}"
                                            FontSize="11.5" Margin="0,8,0,0" TextWrapping="Wrap" Foreground="{DynamicResource TextSecondaryBrush}" />
                             </StackPanel>
                         </RadioButton>
                         <RadioButton Grid.Row="1" Style="{StaticResource EffectChoice}" GroupName="CompletionEffect" Margin="0,16,8,0"
-                                     AutomationProperties.Name="极简勾选特效"
+                                     AutomationProperties.Name="{loc:Loc Key='极简勾选特效'}"
                                      IsChecked="{Binding SelectedEffect, Mode=TwoWay, Converter={StaticResource EqualityToBool}, ConverterParameter=MinimalCheck}">
                             <StackPanel>
                                 <Path Data="{StaticResource IconCheck}" Style="{StaticResource IconPath}" HorizontalAlignment="Left"
                                       Stroke="#059669" Width="26" Height="26" Margin="0,0,0,14" />
-                                <TextBlock Text="极简勾选" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" />
-                                <TextBlock Text="一笔勾选、轻盈回弹与细波纹，利落确认，不打断你的专注。"
+                                <TextBlock Text="{loc:Loc Key='极简勾选'}" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" TextWrapping="Wrap" />
+                                <TextBlock Text="{loc:Loc Key='一笔勾选、轻盈回弹与细波纹，利落确认，不打断你的专注。'}"
                                            FontSize="11.5" Margin="0,8,0,0" TextWrapping="Wrap" Foreground="{DynamicResource TextSecondaryBrush}" />
                             </StackPanel>
                         </RadioButton>
                         <RadioButton Grid.Row="1" Grid.Column="1" Style="{StaticResource EffectChoice}" GroupName="CompletionEffect" Margin="8,16,0,0"
-                                     AutomationProperties.Name="完成印章特效"
+                                     AutomationProperties.Name="{loc:Loc Key='完成印章特效'}"
                                      IsChecked="{Binding SelectedEffect, Mode=TwoWay, Converter={StaticResource EqualityToBool}, ConverterParameter=CompletionStamp}">
                             <StackPanel>
                                 <Path Data="M 13,2 A 11,11 0 1 1 12.9,2 M 13,5 A 8,8 0 1 1 12.9,5 M 9,9 L 17,9 M 9,13 L 17,13 M 9,17 L 17,17 M 13,9 L 13,17"
                                       Style="{StaticResource IconPath}" HorizontalAlignment="Left" Stroke="#851C22"
                                       Width="26" Height="26" Margin="0,0,0,14" />
-                                <TextBlock Text="完成印章" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" />
-                                <TextBlock Text="深红圆印、仿篆刻字形与斑驳印泥，盖下属于这件事的收官印痕。"
+                                <TextBlock Text="{loc:Loc Key='完成印章'}" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" TextWrapping="Wrap" />
+                                <TextBlock Text="{loc:Loc Key='深红圆印、仿篆刻字形与斑驳印泥，盖下属于这件事的收官印痕。'}"
                                            FontSize="11.5" Margin="0,8,0,0" TextWrapping="Wrap" Foreground="{DynamicResource TextSecondaryBrush}" />
                             </StackPanel>
                         </RadioButton>
                         <RadioButton Grid.Row="2" Style="{StaticResource EffectChoice}" GroupName="CompletionEffect" Margin="0,16,8,0"
-                                     AutomationProperties.Name="星光汇聚特效"
+                                     AutomationProperties.Name="{loc:Loc Key='星光汇聚特效'}"
                                      IsChecked="{Binding SelectedEffect, Mode=TwoWay, Converter={StaticResource EqualityToBool}, ConverterParameter=Starlight}">
                             <StackPanel>
                                 <Path Data="M 3,18 L 7,8 L 15,4 L 23,12 L 18,22 M 7,8 L 18,22 M 2,18 L 4,18 M 6,8 L 8,8 M 14,4 L 16,4 M 22,12 L 24,12 M 17,22 L 19,22"
                                       Style="{StaticResource IconPath}" HorizontalAlignment="Left"
                                       Stroke="#0284C7" Width="26" Height="26" Margin="0,0,0,14" />
-                                <TextBlock Text="星光汇聚" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" />
-                                <TextBlock Text="逐颗点亮星座、描出连线，最后亮起金色主星，让完成拥有自己的光芒。"
+                                <TextBlock Text="{loc:Loc Key='星光汇聚'}" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" TextWrapping="Wrap" />
+                                <TextBlock Text="{loc:Loc Key='逐颗点亮星座、描出连线，最后亮起金色主星，让完成拥有自己的光芒。'}"
                                            FontSize="11.5" Margin="0,8,0,0" TextWrapping="Wrap" Foreground="{DynamicResource TextSecondaryBrush}" />
                             </StackPanel>
                         </RadioButton>
                         <RadioButton Grid.Row="2" Grid.Column="1" Style="{StaticResource EffectChoice}" GroupName="CompletionEffect" Margin="8,16,0,0"
-                                     AutomationProperties.Name="礼花绽放特效"
+                                     AutomationProperties.Name="{loc:Loc Key='礼花绽放特效'}"
                                      IsChecked="{Binding SelectedEffect, Mode=TwoWay, Converter={StaticResource EqualityToBool}, ConverterParameter=Fireworks}">
                             <StackPanel>
                                 <Path Data="M 13,2 L 13,8 M 13,18 L 13,24 M 2,13 L 8,13 M 18,13 L 24,13 M 5,5 L 9,9 M 17,17 L 21,21 M 5,21 L 9,17 M 17,9 L 21,5"
                                       Style="{StaticResource IconPath}" HorizontalAlignment="Left" Stroke="#7C3AED"
                                       Width="26" Height="26" Margin="0,0,0,14" />
-                                <TextBlock Text="礼花绽放" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" />
-                                <TextBlock Text="两朵、四朵、六朵礼花分波升空，双层绽放与明亮长拖尾，为完成隆重喝彩。"
+                                <TextBlock Text="{loc:Loc Key='礼花绽放'}" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" TextWrapping="Wrap" />
+                                <TextBlock Text="{loc:Loc Key='两朵、四朵、六朵礼花分波升空，双层绽放与明亮长拖尾，为完成隆重喝彩。'}"
                                            FontSize="11.5" Margin="0,8,0,0" TextWrapping="Wrap" Foreground="{DynamicResource TextSecondaryBrush}" />
                             </StackPanel>
                         </RadioButton>
                     </Grid>
                     <WrapPanel Margin="0,18,0,0" VerticalAlignment="Center">
-                        <TextBlock Text="预览强度" FontSize="12" Margin="0,8,12,0" Foreground="{DynamicResource TextSecondaryBrush}" />
-                        <RadioButton Content="轻型" GroupName="PreviewWeight" Style="{StaticResource WeightRadioStyle}" Margin="0,0,5,0"
+                        <TextBlock Text="{loc:Loc Key='预览强度'}" FontSize="12" Margin="0,8,12,0" Foreground="{DynamicResource TextSecondaryBrush}" />
+                        <RadioButton Content="{loc:Loc Key='轻型'}" GroupName="PreviewWeight" Style="{StaticResource WeightRadioStyle}" Margin="0,0,5,0"
                                      IsChecked="{Binding PreviewWeight, Converter={StaticResource EqualityToBool}, ConverterParameter=Light}" />
-                        <RadioButton Content="中型" GroupName="PreviewWeight" Style="{StaticResource WeightRadioStyle}" Margin="0,0,5,0"
+                        <RadioButton Content="{loc:Loc Key='中型'}" GroupName="PreviewWeight" Style="{StaticResource WeightRadioStyle}" Margin="0,0,5,0"
                                      IsChecked="{Binding PreviewWeight, Converter={StaticResource EqualityToBool}, ConverterParameter=Medium}" />
-                        <RadioButton Content="重型" GroupName="PreviewWeight" Style="{StaticResource WeightRadioStyle}" Margin="0,0,14,0"
+                        <RadioButton Content="{loc:Loc Key='重型'}" GroupName="PreviewWeight" Style="{StaticResource WeightRadioStyle}" Margin="0,0,14,0"
                                      IsChecked="{Binding PreviewWeight, Converter={StaticResource EqualityToBool}, ConverterParameter=Heavy}" />
-                        <Button Content="预览特效" Style="{StaticResource PrimaryButtonStyle}" Padding="14,8"
+                        <Button Content="{loc:Loc Key='预览特效'}" Style="{StaticResource PrimaryButtonStyle}" Padding="14,8"
                                 Command="{Binding PreviewEffectCommand}" />
                     </WrapPanel>
-                    <TextBlock Text="预览只展示视觉效果，不会完成任务或产生历史记录。" FontSize="11" Margin="0,12,0,0"
+                    <TextBlock Text="{loc:Loc Key='预览只展示视觉效果，不会完成任务或产生历史记录。'}" FontSize="11" Margin="0,12,0,0"
                                Foreground="{DynamicResource TextTertiaryBrush}" TextWrapping="Wrap" />
                 </StackPanel>
             </Border>
@@ -240,13 +255,13 @@
                 <StackPanel>
                     <TextBlock Text="{Binding StatusMessage}" FontSize="12" TextWrapping="Wrap"
                                Foreground="{DynamicResource AccentDeepBrush}" />
-                    <Button Content="取消导入" HorizontalAlignment="Left" Margin="0,8,0,0"
+                    <Button Content="{loc:Loc Key='取消导入'}" HorizontalAlignment="Left" Margin="0,8,0,0"
                             Style="{StaticResource TextButtonStyle}" Command="{Binding CancelImportCommand}"
                             Visibility="{Binding IsImporting, Converter={StaticResource BoolToVisibility}}" />
                 </StackPanel>
             </Border>
-            <TextBlock Text="音频保存目录（备份时请一起复制）：" FontSize="11" Margin="0,14,0,4"
-                       Foreground="{DynamicResource TextTertiaryBrush}" />
+            <TextBlock Text="{loc:Loc Key='音频保存目录（备份时请一起复制）：'}" FontSize="11" Margin="0,14,0,4"
+                       Foreground="{DynamicResource TextTertiaryBrush}" TextWrapping="Wrap" />
             <TextBlock Text="{Binding SoundsDirectory}" FontSize="11" TextWrapping="Wrap"
                        Foreground="{DynamicResource TextTertiaryBrush}" />
         </StackPanel>
