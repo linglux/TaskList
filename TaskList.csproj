@@ -9,9 +9,9 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <RootNamespace>TaskList</RootNamespace>
     <AssemblyName>TaskList</AssemblyName>
-    <Version>1.0.2.0</Version>
-    <AssemblyVersion>1.0.2.0</AssemblyVersion>
-    <FileVersion>1.0.2.0</FileVersion>
+    <Version>1.0.3.0</Version>
+    <AssemblyVersion>1.0.3.0</AssemblyVersion>
+    <FileVersion>1.0.3.0</FileVersion>
     <Product>TaskList</Product>
     <Description>本地离线任务清单，数据仅保存在本机 SQLite。</Description>
     <Company>TaskList</Company>
